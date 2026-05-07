@@ -44,7 +44,7 @@ public class ShareRepository : IShareRepository
         if(!exists)
         {
             // Create partition
-            var createQuery = $"CREATE TABLE {tableName} PARTITION OF shares FOR VALUES IN ('{poolId}')";
+            var createQuery = $"CREATE TABLE \"{tableName}\" PARTITION OF shares FOR VALUES IN ('{poolId}')";
 
             logger.Info(() => $"Creating missing partition for pool '{poolId}'");
 
