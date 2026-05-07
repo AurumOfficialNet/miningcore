@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data;
 using AutoMapper;
 using Dapper;
 using Miningcore.Persistence.Model;
@@ -6,6 +7,7 @@ using Miningcore.Persistence.Model.Projections;
 using Miningcore.Persistence.Repositories;
 using Npgsql;
 using NpgsqlTypes;
+using NLog;
 
 namespace Miningcore.Persistence.Postgres.Repositories;
 
@@ -17,6 +19,43 @@ public class ShareRepository : IShareRepository
     }
 
     private readonly IMapper mapper;
+    private static readonly ILogger logger = LogManager.GetCurrentClassLogger();
+    private static readonly HashSet<string> knownPartitions = new();
+
+    private async Task EnsurePartitionAsync(IDbConnection con, string poolId, CancellationToken ct)
+    {
+        // Check if we've already created/verified this partition in this session
+        if(knownPartitions.Contains(poolId))
+            return;
+
+        // Check if partition exists
+        const string checkQuery = @"SELECT EXISTS (
+            SELECT FROM pg_tables 
+            WHERE schemaname = 'public' 
+            AND tablename = @tableName
+        )";
+
+        var tableName = $"shares_{poolId}";
+        var exists = await con.QuerySingleAsync<bool>(new CommandDefinition(
+            checkQuery, 
+            new { tableName }, 
+            cancellationToken: ct));
+
+        if(!exists)
+        {
+            // Create partition
+            var createQuery = $"CREATE TABLE {tableName} PARTITION OF shares FOR VALUES IN ('{poolId}')";
+
+            logger.Info(() => $"Creating missing partition for pool '{poolId}'");
+
+            await con.ExecuteAsync(new CommandDefinition(createQuery, cancellationToken: ct));
+
+            logger.Info(() => $"Successfully created partition '{tableName}'");
+        }
+
+        // Cache that this partition exists
+        knownPartitions.Add(poolId);
+    }
 
     public async Task BatchInsertAsync(IDbConnection con, IDbTransaction tx, IEnumerable<Share> shares, CancellationToken ct)
     {
@@ -24,13 +63,34 @@ public class ShareRepository : IShareRepository
         // the COPY command still honors a current ambient transaction
 
         var pgCon = (NpgsqlConnection) con;
+        var shareList = shares.ToList();
+
+        if(shareList.Count == 0)
+            return;
+
+        // Ensure partitions exist for all pool IDs in this batch
+        var poolIds = shareList.Select(s => s.PoolId).Distinct();
+
+        foreach(var poolId in poolIds)
+        {
+            try
+            {
+                await EnsurePartitionAsync(con, poolId, ct);
+            }
+            catch(PostgresException ex) when (ex.SqlState == "42P07")
+            {
+                // Partition already exists (race condition with another thread/process)
+                logger.Debug(() => $"Partition for pool '{poolId}' already exists");
+                knownPartitions.Add(poolId);
+            }
+        }
 
         const string query = @"COPY shares (poolid, blockheight, difficulty,
             networkdifficulty, miner, worker, useragent, ipaddress, source, created) FROM STDIN (FORMAT BINARY)";
 
         await using(var writer = await pgCon.BeginBinaryImportAsync(query, ct))
         {
-            foreach(var share in shares)
+            foreach(var share in shareList)
             {
                 await writer.StartRowAsync(ct);
 
