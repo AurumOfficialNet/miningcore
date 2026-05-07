@@ -242,6 +242,12 @@ public class BitcoinPool : PoolBase
             }
         }
 
+        catch(InvalidCastException)
+        {
+            var paramsStr = request.Params?.ToString()?.SanitizeForSingleLineLog();
+            logger.Warn(() => $"[{connection.ConnectionId}] Malformed difficulty request: {paramsStr} - ignoring");
+        }
+
         catch(Exception ex)
         {
             logger.Error(ex, () => $"Unable to convert suggested difficulty {request.Params}");

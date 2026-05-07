@@ -133,4 +133,20 @@ public static class StringExtensions
 
         return str[..1].ToUpper() + str[1..];
     }
+
+    /// <summary>
+    /// Sanitizes a string for single-line logging by removing newlines and other control characters
+    /// </summary>
+    public static string SanitizeForSingleLineLog(this string str)
+    {
+        if(string.IsNullOrEmpty(str))
+            return str;
+
+        return new string([.. str.Select(c => c switch
+        {
+            '\r' or '\n' => '\0',
+            '\t' => ' ',
+            _ => c
+        }).Where(c => c != '\0')]);
+    }
 }
