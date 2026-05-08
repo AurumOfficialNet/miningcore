@@ -571,9 +571,87 @@ public abstract class BitcoinJobManagerBase<TJob> : JobManagerBase<TJob>
         if(string.IsNullOrEmpty(address))
             return false;
 
-        var result = await rpc.ExecuteAsync<ValidateAddressResponse>(logger, BitcoinCommands.ValidateAddress, ct, new[] { address });
-
-        return result.Response is {IsValid: true};
+        const int maxRetries = 3;
+        const int baseDelayMs = 100;
+        
+        for(int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                logger.Debug(() => $"Validating address '{address}' (attempt {attempt}/{maxRetries})");
+                
+                var result = await rpc.ExecuteAsync<ValidateAddressResponse>(logger, BitcoinCommands.ValidateAddress, ct, new[] { address });
+                
+                if(result.Error != null)
+                {
+                    logger.Warn(() => $"RPC error validating address '{address}': {result.Error.Message} (attempt {attempt}/{maxRetries})");
+                    
+                    if(attempt < maxRetries)
+                    {
+                        var delay = TimeSpan.FromMilliseconds(baseDelayMs * Math.Pow(2, attempt - 1));
+                        logger.Debug(() => $"Retrying address validation after {delay.TotalMilliseconds}ms");
+                        await Task.Delay(delay, ct);
+                        continue;
+                    }
+                    
+                    logger.Error(() => $"Failed to validate address '{address}' after {maxRetries} attempts due to RPC errors");
+                    return false;
+                }
+                
+                if(result.Response == null)
+                {
+                    logger.Warn(() => $"Null response validating address '{address}' (attempt {attempt}/{maxRetries})");
+                    
+                    if(attempt < maxRetries)
+                    {
+                        var delay = TimeSpan.FromMilliseconds(baseDelayMs * Math.Pow(2, attempt - 1));
+                        logger.Debug(() => $"Retrying address validation after {delay.TotalMilliseconds}ms");
+                        await Task.Delay(delay, ct);
+                        continue;
+                    }
+                    
+                    logger.Error(() => $"Failed to validate address '{address}' after {maxRetries} attempts due to null responses");
+                    return false;
+                }
+                
+                var isValid = result.Response.IsValid;
+                logger.Debug(() => $"Address '{address}' validation result: {isValid} (attempt {attempt}/{maxRetries})");
+                
+                if(isValid)
+                {
+                    logger.Info(() => $"Address '{address}' successfully validated");
+                    return true;
+                }
+                else
+                {
+                    logger.Warn(() => $"Address '{address}' is invalid according to daemon");
+                    return false;
+                }
+            }
+            catch(OperationCanceledException)
+            {
+                logger.Debug(() => $"Address validation for '{address}' cancelled");
+                throw;
+            }
+            catch(Exception ex)
+            {
+                logger.Warn(() => $"Exception validating address '{address}': {ex.Message} (attempt {attempt}/{maxRetries})");
+                
+                if(attempt < maxRetries)
+                {
+                    var delay = TimeSpan.FromMilliseconds(baseDelayMs * Math.Pow(2, attempt - 1));
+                    logger.Debug(() => $"Retrying address validation after {delay.TotalMilliseconds}ms");
+                    await Task.Delay(delay, ct);
+                }
+                else
+                {
+                    logger.Error(() => $"Failed to validate address '{address}' after {maxRetries} attempts due to exceptions: {ex.Message}");
+                    return false;
+                }
+            }
+        }
+        
+        return false;
     }
 
     #endregion // API-Surface

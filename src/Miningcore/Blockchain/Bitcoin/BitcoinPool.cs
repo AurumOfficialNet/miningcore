@@ -228,7 +228,13 @@ public class BitcoinPool : PoolBase
 
         try
         {
-            var requestedDiff = (double) Convert.ChangeType(request.Params, TypeCode.Double)!;
+            double requestedDiff;
+
+            // Handle both array and single parameter formats
+            if (request.Params is JArray array && array.Count > 0)
+                requestedDiff = array[0].ToObject<double>();
+            else
+                requestedDiff = (double) Convert.ChangeType(request.Params, TypeCode.Double)!;
 
             // client may suggest higher-than-base difficulty, but not a lower one
             var poolEndpoint = poolConfig.Ports[connection.LocalEndpoint.Port];

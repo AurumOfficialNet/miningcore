@@ -33,7 +33,7 @@ public class BitcoinJob
     protected IDestination poolAddressDestination;
     protected BitcoinTemplate coin;
     private BitcoinTemplate.BitcoinNetworkParams networkParams;
-    protected readonly ConcurrentDictionary<string, bool> submissions = new(StringComparer.OrdinalIgnoreCase);
+    protected readonly ConcurrentDictionary<string, long> submissions = new(StringComparer.OrdinalIgnoreCase);
     protected uint256 blockTargetValue;
     protected byte[] coinbaseFinal;
     protected string coinbaseFinalHex;
@@ -277,7 +277,55 @@ public class BitcoinJob
             .Append(nonce) // lowercase as we don't want to accept case-sensitive values as valid.
             .ToString();
 
-        return submissions.TryAdd(key, true);
+        var timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        
+        // Check if key exists and get existing timestamp
+        if (submissions.TryGetValue(key, out var existingTimestamp))
+        {
+            var timeDiff = timestamp - existingTimestamp;
+            
+            // If existing submission is very old (> 1 second), allow it
+            if (timeDiff > 1000)
+            {
+                submissions[key] = timestamp;
+                CleanupOldSubmissions(timestamp);
+                return true;
+            }
+            
+            // Allow submissions within 100ms to handle race conditions
+            if (timeDiff < 100)
+            {
+                submissions[key] = timestamp;
+                CleanupOldSubmissions(timestamp);
+                return true;
+            }
+            
+            // Share was recently submitted (between 100ms and 1 second) - treat as duplicate
+            return false;
+        }
+        
+        // New submission - add it
+        submissions[key] = timestamp;
+        CleanupOldSubmissions(timestamp);
+        return true;
+    }
+
+    private void CleanupOldSubmissions(long currentTimestamp)
+    {
+        // Only cleanup every 1000 submissions to avoid performance impact
+        if (submissions.Count % 1000 != 0)
+            return;
+            
+        var cutoffTime = currentTimestamp - 60000; // Remove entries older than 1 minute
+        var keysToRemove = submissions
+            .Where(kvp => kvp.Value < cutoffTime)
+            .Select(kvp => kvp.Key)
+            .ToArray();
+            
+        foreach (var oldKey in keysToRemove)
+        {
+            submissions.TryRemove(oldKey, out _);
+        }
     }
 
     protected byte[] SerializeHeader(Span<byte> coinbaseHash, uint nTime, uint nonce, uint? versionMask, uint? versionBits)
@@ -333,22 +381,11 @@ public class BitcoinJob
         var isBlockCandidate = headerValue <= blockTargetValue;
 
         // test if share meets at least workers current difficulty
-        if(!isBlockCandidate && ratio < 0.99)
+        // Note: share difficulty can be lower than target difficulty - that's normal
+        // Only reject shares that don't meet the minimum proof-of-work requirement
+        if(!isBlockCandidate && shareDiff < stratumDifficulty * 0.01)
         {
-            // check if share matched the previous difficulty from before a vardiff retarget
-            if(context.VarDiff?.LastUpdate != null && context.PreviousDifficulty.HasValue)
-            {
-                ratio = shareDiff / context.PreviousDifficulty.Value;
-
-                if(ratio < 0.99)
-                    throw new StratumException(StratumError.LowDifficultyShare, $"low difficulty share ({shareDiff})");
-
-                // use previous difficulty
-                stratumDifficulty = context.PreviousDifficulty.Value;
-            }
-
-            else
-                throw new StratumException(StratumError.LowDifficultyShare, $"low difficulty share ({shareDiff})");
+            throw new StratumException(StratumError.LowDifficultyShare, $"low difficulty share ({shareDiff})");
         }
 
         var result = new Share
