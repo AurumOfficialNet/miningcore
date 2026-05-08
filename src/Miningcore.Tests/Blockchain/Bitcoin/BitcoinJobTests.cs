@@ -93,6 +93,31 @@ public class BitcoinJobTests : TestBase
     }
 
     [Fact]
+    public void Pool_Unauthorized_Worker_Reauth_Message()
+    {
+        var (job, worker) = CreateJob();
+        
+        // Simulate unauthorized worker by setting IsAuthorized to false
+        var context = worker.ContextAs<BitcoinWorkerContext>();
+        context.IsAuthorized = false;
+
+        var submitParams = JsonConvert.DeserializeObject<object[]>("[\"yXHmbak4AdgK5vWamwqFtEijn2NpgLvmi4\",\"00000001\",\"01000000\",\"63445774\",\"51036775\"]", jsonSerializerSettings);
+
+        // extract params
+        var extraNonce2 = submitParams[2] as string;
+        var nTime = submitParams[3] as string;
+        var nonce = submitParams[4] as string;
+
+        // validate & process - should throw unauthorized exception with re-authorization message
+        var exception = Assert.ThrowsAny<StratumException>(()=> job.ProcessShare(worker, extraNonce2, nTime, nonce));
+        
+        // Verify error message includes re-authorization instruction
+        Assert.NotNull(exception.Message);
+        Assert.Contains("please re-authorize with mining.authorize", exception.Message);
+        Assert.Equal(StratumError.UnauthorizedWorker, exception.Code);
+    }
+
+    [Fact]
     public void Process_Duplicate_After_Timeout()
     {
         var (job, worker) = CreateJob();

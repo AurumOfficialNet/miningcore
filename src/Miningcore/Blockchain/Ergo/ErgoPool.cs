@@ -178,7 +178,11 @@ public class ErgoPool : PoolBase
 
             // validate worker
             if(!context.IsAuthorized)
-                throw new StratumException(StratumError.UnauthorizedWorker, "unauthorized worker");
+            {
+                // Notify miner to re-authorize instead of just rejecting
+                await connection.RespondErrorAsync(StratumError.UnauthorizedWorker, "unauthorized worker - please re-authorize with mining.authorize", request.Id, context.IsAuthorized);
+                return;
+            }
             else if(!context.IsSubscribed)
                 throw new StratumException(StratumError.NotSubscribed, "not subscribed");
 
