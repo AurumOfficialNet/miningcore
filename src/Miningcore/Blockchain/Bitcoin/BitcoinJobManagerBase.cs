@@ -179,7 +179,7 @@ public abstract class BitcoinJobManagerBase<TJob> : JobManagerBase<TJob>
 
         Jobs = triggers.Merge()
             .Select(x => Observable.FromAsync(() => UpdateJob(ct, x.Force, x.Via, x.Data)))
-            .Concat()
+            .Merge(1)
             .Where(x => x.IsNew || x.Force)
             .Do(x =>
             {
@@ -514,7 +514,7 @@ public abstract class BitcoinJobManagerBase<TJob> : JobManagerBase<TJob>
             .Select(_ => Observable.FromAsync(() =>
                 Guard(()=> !hasLegacyDaemon ? UpdateNetworkStatsAsync(ct) : UpdateNetworkStatsLegacyAsync(ct),
                     ex => logger.Error(ex))))
-            .Concat()
+            .Merge(1)
             .Subscribe();
 
         SetupCrypto();

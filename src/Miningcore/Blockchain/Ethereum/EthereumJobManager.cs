@@ -548,7 +548,7 @@ public class EthereumJobManager : JobManagerBase<EthereumJob>
             .Select(via => Observable.FromAsync(() =>
                 Guard(()=> UpdateNetworkStatsAsync(ct),
                     ex=> logger.Error(ex))))
-            .Concat()
+            .Merge(1)
             .Subscribe();
 
         if(poolConfig.EnableInternalStratum == true)
@@ -664,7 +664,7 @@ public class EthereumJobManager : JobManagerBase<EthereumJob>
 
         Jobs = triggers.Merge()
             .Select(x => Observable.FromAsync(() => UpdateJob(ct, x.Via)))
-            .Concat()
+            .Merge(1)
             .Where(isNew => isNew)
             .Select(_ => Unit.Default)
             .Publish()

@@ -618,7 +618,7 @@ public class CryptonoteJobManager : JobManagerBase<CryptonoteJob>
             .Select(via => Observable.FromAsync(() =>
                 Guard(()=> UpdateNetworkStatsAsync(ct),
                     ex=> logger.Error(ex))))
-            .Concat()
+            .Merge(1)
             .Subscribe();
 
         SetupJobUpdates(ct);
@@ -748,7 +748,7 @@ public class CryptonoteJobManager : JobManagerBase<CryptonoteJob>
 
         Blocks = triggers.Merge()
             .Select(x => Observable.FromAsync(() => UpdateJob(ct, x.Via, x.Data)))
-            .Concat()
+            .Merge(1)
             .Where(isNew => isNew)
             .Do(_ => hasInitialBlockTemplate = true)
             .Select(_ => Unit.Default)

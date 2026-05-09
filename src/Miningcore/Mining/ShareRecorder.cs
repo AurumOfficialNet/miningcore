@@ -333,7 +333,7 @@ public class ShareRecorder : BackgroundService
                 Guard(() =>
                         PersistSharesAsync(shares),
                     ex => logger.Error(ex))))
-            .Concat()
+            .Merge(1)
             .ToTask(ct)
             .ContinueWith(task =>
             {

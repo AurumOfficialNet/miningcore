@@ -53,7 +53,7 @@ public class WebSocketNotificationsRelay : WebSocketHandler
     {
         messageBus.Listen<T>()
             .Select(x => Observable.FromAsync(() => BroadcastNotification(type, x)))
-            .Concat()
+            .Merge(1)
             .Subscribe();
     }
 

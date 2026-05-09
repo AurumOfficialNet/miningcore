@@ -389,7 +389,7 @@ public class BitcoinPool : PoolBase
                 .Select(job => Observable.FromAsync(() =>
                     Guard(()=> OnNewJobAsync(job),
                         ex=> logger.Debug(() => $"{nameof(OnNewJobAsync)}: {ex.Message}"))))
-                .Concat()
+                .Merge(1)
                 .Subscribe(_ => { }, ex =>
                 {
                     logger.Debug(ex, nameof(OnNewJobAsync));

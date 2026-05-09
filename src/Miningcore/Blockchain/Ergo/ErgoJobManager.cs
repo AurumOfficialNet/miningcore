@@ -79,7 +79,7 @@ public class ErgoJobManager : JobManagerBase<ErgoJob>
 
         Jobs = triggers.Merge()
             .Select(x => Observable.FromAsync(() => UpdateJob(x.Force, x.Via, x.Data)))
-            .Concat()
+            .Merge(1)
             .Where(x => x.IsNew || x.Force)
             .Do(x =>
             {
