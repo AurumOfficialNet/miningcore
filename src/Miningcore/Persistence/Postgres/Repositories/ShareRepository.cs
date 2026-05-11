@@ -1,5 +1,4 @@
 using System.Data;
-using System.Data;
 using AutoMapper;
 using Dapper;
 using Miningcore.Persistence.Model;

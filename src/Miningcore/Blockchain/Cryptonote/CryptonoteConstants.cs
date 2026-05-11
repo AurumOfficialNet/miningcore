@@ -1,6 +1,6 @@
 using System.Globalization;
+using System.Numerics;
 using System.Text.RegularExpressions;
-using Org.BouncyCastle.Math;
 
 namespace Miningcore.Blockchain.Cryptonote;
 
@@ -20,7 +20,7 @@ public static class CryptonoteConstants
     public const int PaymentIdHexLength = 64;
     public static readonly Regex RegexValidNonce = new("^[0-9a-f]{8}$", RegexOptions.Compiled);
 
-    public static readonly BigInteger Diff1 = new("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
+    public static readonly BigInteger Diff1 = BigInteger.Parse("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", NumberStyles.HexNumber);
     public static readonly System.Numerics.BigInteger Diff1b = System.Numerics.BigInteger.Parse("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", NumberStyles.HexNumber);
 
 #if DEBUG

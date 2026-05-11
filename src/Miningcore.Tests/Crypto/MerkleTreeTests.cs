@@ -5,7 +5,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Miningcore.Tests.Crypto;
 
@@ -103,7 +102,7 @@ public class MerkleTreeTests : TestBase
             "3c7e141f9a3816f2131d3248540701e09e69f50e34e6a77059e785ae3b8263c7"
         };
 
-        Assert.Equal<string>(expectedOutput, output);
+        Assert.Equal(expectedOutput, output);
     }
 
 

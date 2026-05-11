@@ -4,7 +4,6 @@ using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
 using Miningcore.Tests.Benchmarks.Stratum;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Miningcore.Tests.Benchmarks;
 

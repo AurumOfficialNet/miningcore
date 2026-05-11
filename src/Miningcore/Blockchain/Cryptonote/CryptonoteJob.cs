@@ -4,7 +4,7 @@ using Miningcore.Extensions;
 using Miningcore.Native;
 using Miningcore.Stratum;
 using Miningcore.Util;
-using Org.BouncyCastle.Math;
+using System.Numerics;
 using static Miningcore.Native.Cryptonight.Algorithm;
 using Contract = Miningcore.Contracts.Contract;
 
@@ -86,8 +86,8 @@ public class CryptonoteJob
 
     private string EncodeTarget(double difficulty, int size = 4)
     {
-        var diff = BigInteger.ValueOf((long) (difficulty * 255d));
-        var quotient = CryptonoteConstants.Diff1.Divide(diff).Multiply(BigInteger.ValueOf(255));
+        var diff = new BigInteger((long) (difficulty * 255d));
+        var quotient = CryptonoteConstants.Diff1 / diff * new BigInteger(255);
         var bytes = quotient.ToByteArray().AsSpan();
         Span<byte> padded = stackalloc byte[32];
 
@@ -169,7 +169,7 @@ public class CryptonoteJob
             throw new StratumException(StratumError.MinusOne, "bad hash");
 
         // check difficulty
-        var headerValue = headerHash.ToBigInteger();
+        var headerValue = headerHash.ToBigIntegerLittleEndian();
         var shareDiff = (double) new BigRational(CryptonoteConstants.Diff1b, headerValue);
         var stratumDifficulty = context.Difficulty;
         var ratio = shareDiff / stratumDifficulty;

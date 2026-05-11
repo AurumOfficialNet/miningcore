@@ -153,6 +153,8 @@ public partial class BitcoinTemplate : CoinTemplate
         /// </summary>
         [JsonExtensionData]
         public IDictionary<string, object> Extra { get; set; }
+
+        public string Diff1 { get; set; }
     }
 
     [JsonProperty(Order = -7, DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]

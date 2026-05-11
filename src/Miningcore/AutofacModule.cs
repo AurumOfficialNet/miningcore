@@ -39,23 +39,30 @@ public class AutofacModule : Module
     {
         builder.RegisterInstance(new JsonSerializerSettings
         {
-            ContractResolver = new DefaultContractResolver
-            {
-                NamingStrategy = new CamelCaseNamingStrategy
-                {
-                    ProcessDictionaryKeys = false
-                }
-            }
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
         });
 
         builder.RegisterType<MessageBus>()
             .AsImplementedInterfaces()
             .SingleInstance();
 
-        builder.RegisterInstance(new RecyclableMemoryStreamManager
+        builder.Register(c =>
         {
-            ThrowExceptionOnToArray = true
-        });
+            var clusterConfig = c.Resolve<ClusterConfig>();
+            var maxSmallPoolBytes = clusterConfig.Memory?.RmsmMaximumFreeSmallPoolBytes ?? 0x100000;   // 1 MB
+            var maxLargePoolBytes = clusterConfig.Memory?.RmsmMaximumFreeLargePoolBytes ?? 0x800000;   // 8 MB
+            
+            var rmsmOptions = new RecyclableMemoryStreamManager.Options(
+                blockSize: 128 * 1024,                    // 128 KB default block size
+                largeBufferMultiple: 1024 * 1024,         // 1 MB large buffer multiple
+                maximumBufferSize: 128 * 1024 * 1024,     // 128 MB maximum buffer size
+                maximumSmallPoolFreeBytes: maxSmallPoolBytes,
+                maximumLargePoolFreeBytes: maxLargePoolBytes
+            );
+            
+            return new RecyclableMemoryStreamManager(rmsmOptions);
+        })
+        .SingleInstance();
 
         builder.RegisterType<StandardClock>()
             .AsImplementedInterfaces()

@@ -3,8 +3,6 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using Miningcore.Configuration;
 using Xunit;
-using Xunit.Abstractions;
-#pragma warning disable 8974
 
 namespace Miningcore.Tests.Coins;
 

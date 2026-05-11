@@ -30,6 +30,15 @@ public static class ArrayExtensions
         return new(value, true);
     }
 
+    public static BigInteger ToBigIntegerLittleEndian(this Span<byte> value)
+    {
+        // For Bitcoin mining, we need to treat the hash as little-endian
+        // Reverse the bytes to convert from little-endian to big-endian for BigInteger constructor
+        var reversed = value.ToArray();
+        Array.Reverse(reversed);
+        return new BigInteger(reversed, true);
+    }
+
     public static string ToHexString(this IEnumerable<byte> byteArray)
     {
         return ToHexString(byteArray.ToArray());

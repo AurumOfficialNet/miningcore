@@ -11,9 +11,8 @@ public class SimpleRestClient
 {
     public SimpleRestClient(IHttpClientFactory factory, string baseUrl)
     {
+        this.factory = factory;
         this.baseUrl = baseUrl;
-
-        httpClient = factory.CreateClient();
     }
 
     protected virtual IEnumerable<KeyValuePair<string, string>> PrepareQueryParams(
@@ -34,7 +33,9 @@ public class SimpleRestClient
         }
     }
 
-    protected readonly HttpClient httpClient;
+    private readonly IHttpClientFactory factory;
+    private HttpClient _httpClient;
+    protected HttpClient httpClient => _httpClient ??= factory.CreateClient();
     protected readonly string baseUrl;
 
     protected readonly JsonSerializerOptions jsonSerializerOptions = new()

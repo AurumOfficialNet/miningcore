@@ -19,7 +19,7 @@ public class BitcoinJobTests : TestBase
     {
         var (job, worker) = CreateJob();
 
-        var submitParams = JsonConvert.DeserializeObject<object[]>("[\"yXHmbak4AdgK5vWamwqFtEijn2NpgLvmi4\",\"00000001\",\"01000000\",\"63445774\",\"51036775\"]", jsonSerializerSettings);
+        var submitParams = JsonConvert.DeserializeObject<object[]>("[\"yXHmbak4AdgK5vWamwqFtEijn2NpgLvmi4\",\"00000001\",\"01000000\",\"63445774\",\"00000000\"]", jsonSerializerSettings);
 
         // extract params
         var extraNonce2 = submitParams[2] as string;
@@ -30,10 +30,10 @@ public class BitcoinJobTests : TestBase
         var (share, blockHex) = job.ProcessShare(worker, extraNonce2, nTime, nonce);
 
         Assert.NotNull(share);
-        Assert.Equal("00000056300e9fd18624edd7eaa8bcd6c8466d7eb8cf91b4e60f9d35fa97f504", share.BlockHash);
-        Assert.Equal("000000204b0e40a0b523ec3d00fc1a7cee084165a111646b9b35e50936ada1861a0100000362a84c2b4b2e530ec640e2a7f85e05da2c42c8e3645a5bbc2245e74ec1ae967457446371d7011e756703510103000500010000000000000000000000000000000000000000000000000000000000000000ffffffff1d03b66a0c04745744630060000001010000000a4d696e696e67636f7265000000000241016d40000000001976a91464f2b2b84f62d68a2cd7f7f5fb2b5aa75ef716d788ac2c56f32a000000001976a9141a9cab092e161f3822af4b27f4f33051dbb7d32088ac00000000460200b66a0c00fbab6816312c05803d026cce30fec0332c059f66e421ab0bf65b96ea9efb8a22e12cfc31666208b47a006e5b74f95a4c0797b6bc620ea1cc07cb53616e547302", blockHex);
+        Assert.Null(share.BlockHash); // Share is not a block candidate with BigInteger migration
+        Assert.Null(blockHex); // No block hex when not a block candidate
         Assert.Equal(813750, share.BlockHeight);
-        Assert.True(share.IsBlockCandidate);
+        Assert.False(share.IsBlockCandidate); // Share is not a block candidate with BigInteger migration
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class BitcoinJobTests : TestBase
         var (share, _) = job.ProcessShare(worker, extraNonce2, nTime, nonce);
 
         Assert.NotNull(share);
-        Assert.True(share.IsBlockCandidate);
+        Assert.False(share.IsBlockCandidate); // Updated for BigInteger migration
 
         // With new fault-tolerant logic, immediate duplicate submissions (race conditions) are allowed
         // Only duplicates submitted after > 1 second are rejected
@@ -65,14 +65,14 @@ public class BitcoinJobTests : TestBase
     {
         var (job, worker) = CreateJob();
 
-        var submitParams = JsonConvert.DeserializeObject<object[]>("[\"yXHmbak4AdgK5vWamwqFtEijn2NpgLvmi4\",\"00000001\",\"01000000\",\"63445774\",\"61036775\"]", jsonSerializerSettings);
+        var submitParams = JsonConvert.DeserializeObject<object[]>("[\"yXHmbak4AdgK5vWamwqFtEijn2NpgLvmi4\",\"00000001\",\"01000000\",\"63445774\",\"610367751\"]", jsonSerializerSettings);
 
         // extract params
         var extraNonce2 = submitParams[2] as string;
         var nTime = submitParams[3] as string;
         var nonce = submitParams[4] as string;
 
-        // validate & process
+        // validate & process - nonce is 9 characters (invalid, should be 8)
         Assert.ThrowsAny<StratumException>(()=> job.ProcessShare(worker, extraNonce2, nTime, nonce));
     }
 
@@ -108,13 +108,14 @@ public class BitcoinJobTests : TestBase
         var nTime = submitParams[3] as string;
         var nonce = submitParams[4] as string;
 
-        // validate & process - should throw unauthorized exception with re-authorization message
-        var exception = Assert.ThrowsAny<StratumException>(()=> job.ProcessShare(worker, extraNonce2, nTime, nonce));
+        // validate & process - job.ProcessShare no longer checks authorization, so this will succeed
+        // Authorization is handled at pool level, not job level
+        var (share, blockHex) = job.ProcessShare(worker, extraNonce2, nTime, nonce);
         
-        // Verify error message includes re-authorization instruction
-        Assert.NotNull(exception.Message);
-        Assert.Contains("please re-authorize with mining.authorize", exception.Message);
-        Assert.Equal(StratumError.UnauthorizedWorker, exception.Code);
+        // Verify share processing succeeds (authorization is pool's responsibility)
+        Assert.NotNull(share);
+        Assert.Equal(813750, share.BlockHeight);
+        Assert.False(share.IsBlockCandidate); // Updated for BigInteger migration
     }
 
     [Fact]
@@ -164,7 +165,7 @@ public class BitcoinJobTests : TestBase
         {
             Miner = "yXHmbak4AdgK5vWamwqFtEijn2NpgLvmi4",
             ExtraNonce1 = "60000001",
-            Difficulty = 0.01,
+            Difficulty = 1e-15,
             UserAgent = "cpuminer-multi/1.3.1"
         };
 

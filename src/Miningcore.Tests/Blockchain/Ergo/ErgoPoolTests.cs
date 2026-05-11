@@ -1,9 +1,12 @@
 using Autofac;
+using AutoMapper;
 using Microsoft.IO;
 using Miningcore.Blockchain.Ergo;
 using Miningcore.Configuration;
+using Miningcore.Persistence.Dummy;
 using Miningcore.Stratum;
 using Miningcore.Tests.Util;
+using Miningcore.Nicehash;
 using Newtonsoft.Json;
 using NLog;
 using Xunit;
@@ -26,7 +29,11 @@ public class ErgoPoolTests : TestBase
         var messageBus = new MockMessageBus();
         
         // Test that pool can be created
-        var pool = new ErgoPool(container, jsonSerializerSettings, null, null, null, clock, messageBus, null, null);
+        var rmsm = new RecyclableMemoryStreamManager();
+        var mockStatsRepo = new MockStatsRepository();
+        var mapper = container.Resolve<IMapper>();
+        var nicehashService = new SimpleNicehashService();
+        var pool = new ErgoPool(container, jsonSerializerSettings, new DummyConnectionFactory(""), mockStatsRepo, mapper, clock, messageBus, rmsm, nicehashService);
         pool.Configure(poolConfig, clusterConfig);
         
         // Test passes if no exceptions thrown during creation/configuration

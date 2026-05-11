@@ -345,7 +345,11 @@ public class Program : BackgroundService
         builder.RegisterInstance(gcStats);
 
         // AutoMapper
-        var amConf = new MapperConfiguration(cfg => { cfg.AddProfile(new AutoMapperProfile()); });
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var amConf = new MapperConfiguration(cfg => 
+        {
+            cfg.AddProfile(new AutoMapperProfile());
+        }, loggerFactory);
         builder.Register((ctx, parms) => amConf.CreateMapper());
 
         ConfigurePersistence(builder);
@@ -664,7 +668,6 @@ public class Program : BackgroundService
                 var target = new FileTarget("file")
                 {
                     FileName = GetLogPath(config, config.ApiLogFile),
-                    FileNameKind = FilePathKind.Unknown,
                     Layout = layout
                 };
 
@@ -726,7 +729,6 @@ public class Program : BackgroundService
                 var target = new FileTarget("file")
                 {
                     FileName = GetLogPath(config, config.LogFile),
-                    FileNameKind = FilePathKind.Unknown,
                     Layout = layout
                 };
 
@@ -741,7 +743,6 @@ public class Program : BackgroundService
                     var target = new FileTarget(poolConfig.Id)
                     {
                         FileName = GetLogPath(config, poolConfig.Id + ".log"),
-                        FileNameKind = FilePathKind.Unknown,
                         Layout = layout
                     };
 
@@ -772,10 +773,6 @@ public class Program : BackgroundService
 
         var messageBus = services.GetService<IMessageBus>();
         var rmsm = services.GetService<RecyclableMemoryStreamManager>();
-
-        // Configure RecyclableMemoryStream
-        rmsm.MaximumFreeSmallPoolBytes = clusterConfig.Memory?.RmsmMaximumFreeSmallPoolBytes ?? 0x100000;   // 1 MB
-        rmsm.MaximumFreeLargePoolBytes = clusterConfig.Memory?.RmsmMaximumFreeLargePoolBytes ?? 0x800000;   // 8 MB
 
         // Configure Equihash
         EquihashSolver.messageBus = messageBus;

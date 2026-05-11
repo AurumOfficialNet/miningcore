@@ -1,9 +1,21 @@
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
 using Autofac;
 using JetBrains.Annotations;
+using Miningcore.Blockchain.Bitcoin;
+using Miningcore.Configuration;
 using Miningcore.Crypto;
+using Miningcore.Crypto.Hashing;
 using Miningcore.Crypto.Hashing.Algorithms;
+using Miningcore.Extensions;
+using Miningcore.Messaging;
+using Miningcore.Nicehash;
+using Miningcore.Persistence;
+using Miningcore.Persistence.Repositories;
+using Miningcore.Time;
+using Miningcore.Util;
 using NBitcoin;
 using Newtonsoft.Json;
 
@@ -27,6 +39,14 @@ public abstract partial class CoinTemplate
 
 public partial class BitcoinTemplate
 {
+    private readonly Lazy<BigInteger> diff1Value;
+    private readonly Lazy<BigInteger> diff1BValue;
+
+    [JsonIgnore]
+    public BigInteger Diff1Value => diff1Value.Value;
+
+    [JsonIgnore]
+    public BigInteger Diff1BValue => diff1BValue.Value;
     public BitcoinTemplate()
     {
         coinbaseHasherValue = new Lazy<IHashAlgorithm>(() =>
@@ -40,6 +60,24 @@ public partial class BitcoinTemplate
 
         posBlockHasherValue = new Lazy<IHashAlgorithm>(() =>
             HashAlgorithmFactory.GetHash(ComponentContext, PoSBlockHasher));
+
+        diff1Value = new Lazy<BigInteger>(() =>
+        {
+            var network = GetNetwork(ChainName.Mainnet); // Default to mainnet for initialization
+            if(string.IsNullOrEmpty(network?.Diff1))
+                return BitcoinConstants.Diff1;
+                
+            return BigInteger.Parse(network.Diff1, NumberStyles.HexNumber);
+        });
+
+        diff1BValue = new Lazy<BigInteger>(() =>
+        {
+            var network = GetNetwork(ChainName.Mainnet); // Default to mainnet for initialization
+            if(string.IsNullOrEmpty(network?.Diff1))
+                return BitcoinConstants.Diff1;
+
+            return BigInteger.Parse(network.Diff1, NumberStyles.HexNumber);
+        });
     }
 
     private readonly Lazy<IHashAlgorithm> coinbaseHasherValue;
@@ -90,12 +128,12 @@ public partial class EquihashCoinTemplate
     {
         public EquihashNetworkParams()
         {
-            diff1Value = new Lazy<Org.BouncyCastle.Math.BigInteger>(() =>
+            diff1Value = new Lazy<BigInteger>(() =>
             {
                 if(string.IsNullOrEmpty(Diff1))
                     throw new InvalidOperationException("Diff1 has not yet been initialized");
 
-                return new Org.BouncyCastle.Math.BigInteger(Diff1, 16);
+                return BigInteger.Parse(Diff1, NumberStyles.HexNumber);
             });
 
             diff1BValue = new Lazy<BigInteger>(() =>
@@ -107,11 +145,11 @@ public partial class EquihashCoinTemplate
             });
         }
 
-        private readonly Lazy<Org.BouncyCastle.Math.BigInteger> diff1Value;
+        private readonly Lazy<BigInteger> diff1Value;
         private readonly Lazy<BigInteger> diff1BValue;
 
         [JsonIgnore]
-        public Org.BouncyCastle.Math.BigInteger Diff1Value => diff1Value.Value;
+        public BigInteger Diff1Value => diff1Value.Value;
 
         [JsonIgnore]
         public BigInteger Diff1BValue => diff1BValue.Value;

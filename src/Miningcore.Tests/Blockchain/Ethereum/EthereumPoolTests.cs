@@ -1,9 +1,12 @@
 using Autofac;
+using AutoMapper;
 using Microsoft.IO;
 using Miningcore.Blockchain.Ethereum;
 using Miningcore.Configuration;
+using Miningcore.Persistence.Dummy;
 using Miningcore.Stratum;
 using Miningcore.Tests.Util;
+using Miningcore.Nicehash;
 using Newtonsoft.Json;
 using NLog;
 using Xunit;
@@ -25,7 +28,10 @@ public class EthereumPoolTests : TestBase
         var clock = MockMasterClock.FromTicks(638010200200475015);
         var messageBus = new MockMessageBus();
         var rmsm = new RecyclableMemoryStreamManager();
-        var pool = new EthereumPool(container, jsonSerializerSettings, null, null, null, clock, messageBus, rmsm, null);
+        var mockStatsRepo = new MockStatsRepository();
+        var mapper = container.Resolve<IMapper>();
+        var nicehashService = new SimpleNicehashService();
+        var pool = new EthereumPool(container, jsonSerializerSettings, new DummyConnectionFactory(""), mockStatsRepo, mapper, clock, messageBus, rmsm, nicehashService);
         pool.Configure(poolConfig, clusterConfig);
         
         // Test passes if no exceptions thrown during creation/configuration

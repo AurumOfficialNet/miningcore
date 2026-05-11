@@ -15,6 +15,16 @@
         <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSX>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+      <WarningLevel>9999</WarningLevel>
+      <NoWarn>1701;1702;CS9057</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+      <WarningLevel>9999</WarningLevel>
+      <NoWarn>1701;1702;CS9057</NoWarn>
+    </PropertyGroup>
+
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
             <_Parameter1>$(AssemblyName).Tests</_Parameter1>
@@ -41,48 +51,47 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AspNetCoreRateLimit" Version="4.0.2" />
-        <PackageReference Include="Autofac" Version="6.4.0" />
-        <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
-        <PackageReference Include="CircularBuffer" Version="1.3.0" />
-        <PackageReference Include="GitVersion.MsBuild" Version="5.11.1">
+        <PackageReference Include="AspNetCoreRateLimit" Version="5.0.0" />
+        <PackageReference Include="Autofac" Version="9.1.0" />
+        <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="11.0.0" />
+        <PackageReference Include="CircularBuffer" Version="1.4.0" />
+        <PackageReference Include="GitVersion.MsBuild" Version="6.7.0">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.2.1" />
-        <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.14" />
-        <PackageReference Include="Npgsql" Version="6.0.7" />
-        <PackageReference Include="NSwag.AspNetCore" Version="13.17.0" />
-        <PackageReference Include="NSwag.CodeGeneration.CSharp" Version="13.17.0" />
-        <PackageReference Include="NSwag.MSBuild" Version="13.17.0">
+        <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
+        <PackageReference Include="Newtonsoft.Json.Schema" Version="4.0.1" />
+        <PackageReference Include="Npgsql" Version="10.0.2" />
+        <PackageReference Include="NSwag.AspNetCore" Version="14.7.1" />
+        <PackageReference Include="NSwag.CodeGeneration.CSharp" Version="14.7.1" />
+        <PackageReference Include="NSwag.MSBuild" Version="14.7.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="NLog.Extensions.Hosting" Version="5.1.0" />
-        <PackageReference Include="AutoMapper" Version="12.0.0" />
-        <PackageReference Include="Dapper" Version="2.0.123" />
-        <PackageReference Include="FluentValidation" Version="11.2.2" />
-        <PackageReference Include="FluentValidation.AspNetCore" Version="11.2.2" />
-        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.2.2" />
-        <PackageReference Include="JetBrains.Annotations" Version="2022.3.1" />
-        <PackageReference Include="MailKit" Version="3.4.2" />
-        <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
-        <PackageReference Include="NBitcoin" Version="7.0.17" />
-        <PackageReference Include="NBitcoin.Altcoins" Version="3.0.17" />
+        <PackageReference Include="NLog.Extensions.Hosting" Version="6.1.3" />
+        <PackageReference Include="AutoMapper" Version="16.1.1" />
+        <PackageReference Include="Dapper" Version="2.1.72" />
+        <PackageReference Include="FluentValidation" Version="12.1.1" />
+        <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
+        <PackageReference Include="MailKit" Version="4.16.0" />
+        <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="5.1.0" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.7" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.7" />
+        <PackageReference Include="NBitcoin" Version="10.0.3" />
+        <PackageReference Include="NBitcoin.Altcoins" Version="6.0.3" />
         <PackageReference Include="NBitcoin.Zcash" Version="3.0.0" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-        <PackageReference Include="NLog" Version="5.0.5" />
-        <PackageReference Include="NLog.Extensions.Logging" Version="5.1.0" />
-        <PackageReference Include="Polly" Version="7.2.3" />
-        <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
-        <PackageReference Include="prometheus-net.AspNetCore" Version="7.0.0" />
-        <PackageReference Include="prometheus-net" Version="7.0.0" />
-        <PackageReference Include="protobuf-net" Version="3.1.25" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="NLog" Version="6.1.3" />
+        <PackageReference Include="NLog.Extensions.Logging" Version="6.1.3" />
+        <PackageReference Include="Polly" Version="8.6.6" />
+                <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
+        <PackageReference Include="prometheus-net" Version="8.2.1" />
+        <PackageReference Include="protobuf-net" Version="3.2.56" />
         <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
-        <PackageReference Include="System.Reactive" Version="5.0.0" />
+        <PackageReference Include="System.Reactive" Version="6.1.0" />
     </ItemGroup>
 
     <ItemGroup>

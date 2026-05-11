@@ -3,8 +3,13 @@ using System.IO;
 using System.Reflection;
 using Autofac;
 using AutoMapper;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Microsoft.IO;
 using Miningcore.Configuration;
 using Miningcore.Native;
+using Miningcore.Nicehash;
+using Miningcore.Rest;
 using Miningcore.Tests.Util;
 using Miningcore.Time;
 
@@ -35,8 +40,18 @@ public static class ModuleInitializer
 
             builder.RegisterAssemblyModules(typeof(AutofacModule).GetTypeInfo().Assembly);
 
+            // Register RecyclableMemoryStreamManager for tests
+            builder.RegisterInstance(new RecyclableMemoryStreamManager());
+            
+            // Register HttpClientFactory and MemoryCache for NicehashService
+            builder.RegisterInstance(new MockHttpClientFactory());
+            builder.RegisterInstance(new MemoryCache(new MemoryCacheOptions()));
+            builder.RegisterType<SimpleRestClient>().AsSelf();
+            builder.RegisterType<NicehashService>().AsSelf();
+
             // AutoMapper
-            var amConf = new MapperConfiguration(cfg => { cfg.AddProfile(new AutoMapperProfile()); });
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var amConf = new MapperConfiguration(cfg => { cfg.AddProfile(new AutoMapperProfile()); }, loggerFactory);
 
             builder.Register((ctx, parms) => amConf.CreateMapper());
 

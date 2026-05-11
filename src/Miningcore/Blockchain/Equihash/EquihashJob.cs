@@ -216,11 +216,15 @@ public class EquihashJob
         {
             var bs = new BitcoinStream(stream, true);
 
-            bs.ReadWrite(ref header);
-            bs.ReadWrite(ref solution);
+            bs.ReadWrite(header.Length);
+            bs.ReadWrite(header.ToArray());
+            bs.ReadWrite(solution.Length);
+            bs.ReadWrite(solution.ToArray());
             bs.ReadWriteAsVarInt(ref transactionCount);
-            bs.ReadWrite(ref coinbase);
-            bs.ReadWrite(ref rawTransactionBuffer);
+            bs.ReadWrite(coinbase.Length);
+            bs.ReadWrite(coinbase.ToArray());
+            bs.ReadWrite(rawTransactionBuffer.Length);
+            bs.ReadWrite(rawTransactionBuffer);
 
             return stream.ToArray();
         }
@@ -250,7 +254,7 @@ public class EquihashJob
         var headerValue = new uint256(headerHash);
 
         // calc share-diff
-        var shareDiff = (double) new BigRational(networkParams.Diff1BValue, headerHash.ToBigInteger());
+        var shareDiff = (double) new BigRational(networkParams.Diff1BValue, headerHash.ToBigIntegerLittleEndian());
         var stratumDifficulty = context.Difficulty;
         var ratio = shareDiff / stratumDifficulty;
 
@@ -329,7 +333,7 @@ public class EquihashJob
         this.network = network;
         BlockTemplate = blockTemplate;
         JobId = jobId;
-        Difficulty = (double) new BigRational(networkParams.Diff1BValue, BlockTemplate.Target.HexToReverseByteArray().AsSpan().ToBigInteger());
+        Difficulty = (double) new BigRational(networkParams.Diff1BValue, BlockTemplate.Target.HexToReverseByteArray().AsSpan().ToBigIntegerLittleEndian());
 
         // ZCash Sapling & Overwinter support
         isSaplingActive = networkParams.SaplingActivationHeight.HasValue &&
