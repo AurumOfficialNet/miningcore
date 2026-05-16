@@ -165,6 +165,7 @@ public class Program : BackgroundService
                         // Controllers
                         services.AddSingleton<PoolApiController, PoolApiController>();
                         services.AddSingleton<AdminApiController, AdminApiController>();
+                        services.AddSingleton<NetworkApiController, NetworkApiController>();
 
                         // MVC
                         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -227,6 +228,8 @@ public class Program : BackgroundService
                         app.UseWebSockets();
                         app.MapWebSocketManager("/notifications", app.ApplicationServices.GetService<WebSocketNotificationsRelay>());
                         app.UseMetricServer();
+
+                        app.UseMiddleware<AdminApiAuthorizationMiddleware>();
 
                         app.UseMiddleware<ApiRequestMetricsMiddleware>();
 
@@ -330,6 +333,11 @@ public class Program : BackgroundService
     private static ClusterConfig clusterConfig;
     private static readonly ConcurrentDictionary<string, IMiningPool> pools = new();
     private static readonly AdminGcStats gcStats = new();
+    private static readonly AdminLogMemoryTarget adminLogTarget = new()
+    {
+        Name = "adminMemory",
+        Capacity = 200,
+    };
 
     public Program(IComponentContext container, IHostApplicationLifetime hal)
     {
@@ -343,9 +351,15 @@ public class Program : BackgroundService
         builder.RegisterInstance(clusterConfig);
         builder.RegisterInstance(pools);
         builder.RegisterInstance(gcStats);
+        builder.RegisterInstance(adminLogTarget);
 
         // AutoMapper
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var loggerFactory = LoggerFactory.Create(logging =>
+        {
+            logging.ClearProviders();
+            logging.AddNLog();
+            logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+        });
         var amConf = new MapperConfiguration(cfg => 
         {
             cfg.AddProfile(new AutoMapperProfile());
@@ -625,16 +639,14 @@ public class Program : BackgroundService
  ██║╚██╔╝██║██║██║╚██╗██║██║██║╚██╗██║██║   ██║██║     ██║   ██║██╔══██╗██╔══╝
  ██║ ╚═╝ ██║██║██║ ╚████║██║██║ ╚████║╚██████╔╝╚██████╗╚██████╔╝██║  ██║███████╗
 ");
-        Console.WriteLine(" https://github.com/oliverw/miningcore\n");
+        Console.WriteLine(" https://github.com/AurumOfficialNet/miningcore\n");
         Console.WriteLine(" Donate to one of these addresses to support the project:\n");
-        Console.WriteLine(" ETH  - miningcore.eth (ENS Address)");
-        Console.WriteLine(" BTC  - miningcore.eth (ENS Address)");
-        Console.WriteLine(" LTC  - miningcore.eth (ENS Address)");
-        Console.WriteLine(" DASH - XqpBAV9QCaoLnz42uF5frSSfrJTrqHoxjp");
-        Console.WriteLine(" ZEC  - t1YHZHz2DGVMJiggD2P4fBQ2TAPgtLSUwZ7");
-        Console.WriteLine(" ZCL  - t1MFU1vD3YKgsK6Uh8hW7UTY8mKAV2xVqBr");
-        Console.WriteLine(" ETC  - 0xF8cCE9CE143C68d3d4A7e6bf47006f21Cfcf93c0");
-        Console.WriteLine(" XMR  - 475YVJbPHPedudkhrcNp1wDcLMTGYusGPF5fqE7XjnragVLPdqbCHBdZg3dF4dN9hXMjjvGbykS6a77dTAQvGrpiQqHp2eH");
+        Console.WriteLine(" ACG  - adhQ6R3EXGmqYjabppKeWVsrUDRFr5g58d");
+        Console.WriteLine(" ALEO - aleo16gtjh0v89l7p0pmu58mprdz8n2mcvr9a5y45md489mkcn8dqhcgqpnc3dn");
+        Console.WriteLine(" BCH  - qzunqg0n9xntswnkdepsf6543yvun8azcykyklxult");
+        Console.WriteLine(" PPC  - PMTTEnjRGe9hTK4VxwMFQUHH2wQP6qBRM6");
+        Console.WriteLine(" VRSC - RM8hBRF3FvkHRPHcKMXvtJ5YQpHQ8hvK63");
+        Console.WriteLine(" XMR  - 46bY6RnXEvQ65QahZYxjkFfMYbe8RYKVXfSaS922apRNQJFavUfXYFVBpYSDK2m1zwG2DD16UiDCFaDg2Bh5scc2KKu3CU3");
         Console.WriteLine();
     }
 
@@ -751,6 +763,10 @@ public class Program : BackgroundService
                 }
             }
         }
+
+        // In-memory target for admin API log endpoint (Warn and above)
+        loggingConfig.AddTarget(adminLogTarget);
+        loggingConfig.AddRule(NLog.LogLevel.Warn, NLog.LogLevel.Fatal, adminLogTarget);
 
         LogManager.Configuration = loggingConfig;
 

@@ -1,0 +1,1161 @@
+{
+    "info": {
+        "name": "Miningcore API",
+        "description": "Complete API collection for Miningcore - A high-performance multi-coin mining pool server",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "_exporter_id": "miningcore"
+    },
+    "item": [
+        {
+            "name": "General",
+            "item": [
+                {
+                    "name": "API Help",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/help",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "help"]
+                        },
+                        "description": "Returns a list of all available API endpoints"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/health-check",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "health-check"]
+                        },
+                        "description": "Simple health check endpoint that returns 👍"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Network",
+            "item": [
+                {
+                    "name": "Get Network Overview",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/network/:poolId/overview",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "network", ":poolId", "overview"],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "acg",
+                                    "description": "Pool identifier"
+                                }
+                            ]
+                        },
+                        "description": "Get network statistics including total supply, block time, network hashrate, difficulty, and 24h chart data"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Network Blocks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/network/:poolId/blocks",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "network", ":poolId", "blocks"],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "acg",
+                                    "description": "Pool identifier"
+                                }
+                            ]
+                        },
+                        "description": "Get last 100 blocks from the network"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Block by Height",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/network/:poolId/block/:height",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "network", ":poolId", "block", ":height"],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "acg",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "height",
+                                    "value": "1000",
+                                    "description": "Block height"
+                                }
+                            ]
+                        },
+                        "description": "Get detailed information about a specific block by height"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Top 100 Holders",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/network/:poolId/top100",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "network", ":poolId", "top100"],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "acg",
+                                    "description": "Pool identifier"
+                                }
+                            ]
+                        },
+                        "description": "Get top 100 balance holders with rank, address, balance, and percent of supply"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Cluster",
+            "item": [
+                {
+                    "name": "Get Blocks (Cluster)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/blocks?page=0&pageSize=15&state=Confirmed&state=Pending",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "blocks"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                },
+                                {
+                                    "key": "state",
+                                    "value": "Confirmed",
+                                    "description": "Block status filter (Confirmed, Pending, Orphaned)"
+                                },
+                                {
+                                    "key": "state",
+                                    "value": "Pending",
+                                    "description": "Can add multiple state parameters"
+                                }
+                            ]
+                        },
+                        "description": "Get paginated list of blocks across all pools in the cluster"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Pools",
+            "item": [
+                {
+                    "name": "Get All Pools",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools?topMinersRange=24",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools"],
+                            "query": [
+                                {
+                                    "key": "topMinersRange",
+                                    "value": "24",
+                                    "description": "Hours to look back for top miners (default: 24)"
+                                }
+                            ]
+                        },
+                        "description": "Get information about all enabled pools"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Pool Info",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId?topMinersRange=24",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId"],
+                            "query": [
+                                {
+                                    "key": "topMinersRange",
+                                    "value": "24",
+                                    "description": "Hours to look back for top miners (default: 24)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                }
+                            ]
+                        },
+                        "description": "Get detailed information about a specific pool"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Pool Performance",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/performance?r=Day&i=Hour",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "performance"],
+                            "query": [
+                                {
+                                    "key": "r",
+                                    "value": "Day",
+                                    "description": "Range: Day or Month"
+                                },
+                                {
+                                    "key": "i",
+                                    "value": "Hour",
+                                    "description": "Interval: Hour"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                }
+                            ]
+                        },
+                        "description": "Get pool performance statistics over time"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Pool Miners",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/miners?page=0&pageSize=15&topMinersRange=24",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "miners"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                },
+                                {
+                                    "key": "topMinersRange",
+                                    "value": "24",
+                                    "description": "Hours to look back (default: 24)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                }
+                            ]
+                        },
+                        "description": "Get paginated list of miners for a pool sorted by hashrate"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Pool Blocks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/blocks?page=0&pageSize=15&state=Confirmed",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "blocks"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                },
+                                {
+                                    "key": "state",
+                                    "value": "Confirmed",
+                                    "description": "Block status: Confirmed, Pending, or Orphaned"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                }
+                            ]
+                        },
+                        "description": "Get paginated list of blocks found by a pool"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Pool Blocks V2",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v2/pools/:poolId/blocks?page=0&pageSize=15&state=Confirmed",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "v2", "pools", ":poolId", "blocks"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                },
+                                {
+                                    "key": "state",
+                                    "value": "Confirmed",
+                                    "description": "Block status: Confirmed, Pending, or Orphaned"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                }
+                            ]
+                        },
+                        "description": "Get paginated list of blocks (V2 - includes page count in response)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Pool Payments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/payments?page=0&pageSize=15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "payments"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                }
+                            ]
+                        },
+                        "description": "Get paginated list of payments made by a pool"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Pool Payments V2",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v2/pools/:poolId/payments?page=0&pageSize=15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "v2", "pools", ":poolId", "payments"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                }
+                            ]
+                        },
+                        "description": "Get paginated list of payments (V2 - includes page count in response)"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Miners",
+            "item": [
+                {
+                    "name": "Get Miner Info",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/miners/:address?perfMode=Day",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "miners", ":address"],
+                            "query": [
+                                {
+                                    "key": "perfMode",
+                                    "value": "Day",
+                                    "description": "Performance sample range: Hour, Day, or Month"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get detailed statistics for a specific miner including performance samples"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Payments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/miners/:address/payments?page=0&pageSize=15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "miners", ":address", "payments"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get paginated list of payments for a specific miner"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Payments V2",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v2/pools/:poolId/miners/:address/payments?page=0&pageSize=15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "v2", "pools", ":poolId", "miners", ":address", "payments"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get paginated list of payments for a miner (V2 - includes page count)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Balance Changes",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/miners/:address/balancechanges?page=0&pageSize=15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "miners", ":address", "balancechanges"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get paginated list of balance changes for a miner"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Balance Changes V2",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v2/pools/:poolId/miners/:address/balancechanges?page=0&pageSize=15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "v2", "pools", ":poolId", "miners", ":address", "balancechanges"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get balance changes for a miner (V2 - includes page count)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Daily Earnings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/miners/:address/earnings/daily?page=0&pageSize=15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "miners", ":address", "earnings", "daily"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get daily earnings aggregated by date"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Daily Earnings V2",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v2/pools/:poolId/miners/:address/earnings/daily?page=0&pageSize=15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "v2", "pools", ":poolId", "miners", ":address", "earnings", "daily"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get daily earnings (V2 - includes page count)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Performance",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/miners/:address/performance?mode=Day",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "miners", ":address", "performance"],
+                            "query": [
+                                {
+                                    "key": "mode",
+                                    "value": "Day",
+                                    "description": "Sample range: Hour, Day, or Month"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get miner performance statistics over time with worker breakdown"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Settings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/miners/:address/settings",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "miners", ":address", "settings"],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get miner settings (payment threshold, etc.)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Miner Settings",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"ipAddress\": \"192.168.1.100\",\n    \"settings\": {\n        \"paymentThreshold\": 0.01\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pools/:poolId/miners/:address/settings",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pools", ":poolId", "miners", ":address", "settings"],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Update miner settings. Requires IP address verification against recently used IPs."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Admin",
+            "item": [
+                {
+                    "name": "Get Admin Capabilities",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Admin-Client-Verify",
+                                "value": "SUCCESS",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Subject",
+                                "value": "CN=admin-kevin",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Issuer",
+                                "value": "",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Serial",
+                                "value": "",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/capabilities",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "admin", "capabilities"]
+                        },
+                        "description": "Returns admin capability flags and permissions for the current admin identity. Use via trusted nginx mTLS path in production."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Admin Overview",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Admin-Client-Verify",
+                                "value": "SUCCESS",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Subject",
+                                "value": "CN=admin-kevin,O=Aurum",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Serial",
+                                "value": "66F9C3F0E986DA3D4E30B4F8E1B32CB2C5408A29",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/overview",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "admin", "overview"]
+                        },
+                        "description": "Get pool and backend health overview (admin only)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Admin Blocks",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Admin-Client-Verify",
+                                "value": "SUCCESS",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Subject",
+                                "value": "CN=admin-kevin,O=Aurum",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Serial",
+                                "value": "66F9C3F0E986DA3D4E30B4F8E1B32CB2C5408A29",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/blocks",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "admin", "blocks"]
+                        },
+                        "description": "Get block queue and payout statistics (admin only)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Admin Logs",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Admin-Client-Verify",
+                                "value": "SUCCESS",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Subject",
+                                "value": "CN=admin-kevin,O=Aurum",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Serial",
+                                "value": "66F9C3F0E986DA3D4E30B4F8E1B32CB2C5408A29",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/logs",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "admin", "logs"]
+                        },
+                        "description": "Get admin activity logs (admin only)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get GC Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Admin-Client-Verify",
+                                "value": "SUCCESS",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Subject",
+                                "value": "CN=admin-kevin",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Issuer",
+                                "value": "",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Serial",
+                                "value": "",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/stats/gc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "admin", "stats", "gc"]
+                        },
+                        "description": "Get garbage collector statistics (admin only)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Force GC Collection",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Admin-Client-Verify",
+                                "value": "SUCCESS",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Subject",
+                                "value": "CN=admin-kevin",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Issuer",
+                                "value": "",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Serial",
+                                "value": "",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/forcegc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "admin", "forcegc"]
+                        },
+                        "description": "Force garbage collection (admin only)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Balance (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Admin-Client-Verify",
+                                "value": "SUCCESS",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Subject",
+                                "value": "CN=admin-kevin",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Issuer",
+                                "value": "",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Serial",
+                                "value": "",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/pools/:poolId/miners/:address/getbalance",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "admin", "pools", ":poolId", "miners", ":address", "getbalance"],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get miner balance details (admin only)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Settings (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Admin-Client-Verify",
+                                "value": "SUCCESS",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Subject",
+                                "value": "CN=admin-kevin",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Issuer",
+                                "value": "",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Serial",
+                                "value": "",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/pools/:poolId/miners/:address/settings",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "admin", "pools", ":poolId", "miners", ":address", "settings"],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get miner settings (admin only)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Miner Settings (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Admin-Client-Verify",
+                                "value": "SUCCESS",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Subject",
+                                "value": "CN=admin-kevin",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Issuer",
+                                "value": "",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Admin-Client-Serial",
+                                "value": "",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"paymentThreshold\": 0.01\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/pools/:poolId/miners/:address/settings",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "admin", "pools", ":poolId", "miners", ":address", "settings"],
+                            "variable": [
+                                {
+                                    "key": "poolId",
+                                    "value": "btc1",
+                                    "description": "Pool identifier"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Update miner settings (admin only, no IP verification required)"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:4000",
+            "type": "string"
+        }
+    ]
+}

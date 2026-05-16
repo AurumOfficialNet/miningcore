@@ -848,6 +848,22 @@ public partial class ApiConfig
     public string[] AdminIpWhitelist { get; set; }
 
     /// <summary>
+    /// Restricts trusted reverse proxies that are allowed to forward admin client certificate headers
+    /// If this list is null or empty, the default is 127.0.0.1
+    /// </summary>
+    public string[] AdminTrustedProxyIpWhitelist { get; set; }
+
+    /// <summary>
+    /// Authorized admin client certificate subjects
+    /// </summary>
+    public string[] AdminClientAllowSubjects { get; set; }
+
+    /// <summary>
+    /// Authorized admin client certificate serial numbers
+    /// </summary>
+    public string[] AdminClientAllowSerials { get; set; }
+
+    /// <summary>
     /// Restricts access to the /metrics endpoint to these IP addresses
     /// If this list null or empty, the default is 127.0.0.1
     /// </summary>

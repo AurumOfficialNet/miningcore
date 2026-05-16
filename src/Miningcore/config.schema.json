@@ -41,6 +41,42 @@
             ]
           }
         },
+        "adminTrustedProxyIpWhitelist": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "adminClientAllowSubjects": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "adminClientAllowSerials": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
         "adminPort": {
           "type": [
             "integer",
