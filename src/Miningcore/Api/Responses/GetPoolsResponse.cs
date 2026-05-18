@@ -48,6 +48,17 @@ public class ApiPoolPaymentProcessingConfig
     public IDictionary<string, object> Extra { get; set; }
 }
 
+public class PoolOverviewMetrics
+{
+    public long ShareCount24h { get; set; }
+    public double ShareDifficulty24h { get; set; }
+    public double? NetworkShare { get; set; }
+    public DateTime? LastPoolPayout { get; set; }
+    public DateTime? SchedulerNextPayoutRun { get; set; }
+    public DateTime? NextPayoutEta { get; set; }
+    public string NextPayoutEtaSource { get; set; }
+}
+
 public partial class PoolInfo
 {
     // Configuration Properties directly mapping to PoolConfig (omitting security relevant fields)
@@ -73,6 +84,7 @@ public partial class PoolInfo
     public uint TotalBlocks { get; set; }
     public DateTime? LastPoolBlockTime { get; set; }
     public double PoolEffort { get; set; }
+    public PoolOverviewMetrics Overview { get; set; }
 }
 
 public class GetPoolsResponse

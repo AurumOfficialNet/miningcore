@@ -10,9 +10,11 @@ using Miningcore.Extensions;
 using Miningcore.Messaging;
 using Miningcore.Mining;
 using Miningcore.Notifications.Messages;
+using Miningcore.Payments.Abstractions;
 using Miningcore.Persistence;
 using Miningcore.Persistence.Model;
 using Miningcore.Persistence.Repositories;
+using Miningcore.Time;
 using NLog;
 using Contract = Miningcore.Contracts.Contract;
 
@@ -29,7 +31,9 @@ public class PayoutManager : BackgroundService
         IShareRepository shareRepo,
         IBalanceRepository balanceRepo,
         ClusterConfig clusterConfig,
-        IMessageBus messageBus)
+        IMessageBus messageBus,
+        IMasterClock clock,
+        IPayoutSchedulerState schedulerState)
     {
         Contract.RequiresNonNull(ctx);
         Contract.RequiresNonNull(cf);
@@ -37,6 +41,8 @@ public class PayoutManager : BackgroundService
         Contract.RequiresNonNull(shareRepo);
         Contract.RequiresNonNull(balanceRepo);
         Contract.RequiresNonNull(messageBus);
+        Contract.RequiresNonNull(clock);
+        Contract.RequiresNonNull(schedulerState);
 
         this.ctx = ctx;
         this.cf = cf;
@@ -45,6 +51,8 @@ public class PayoutManager : BackgroundService
         this.balanceRepo = balanceRepo;
         this.messageBus = messageBus;
         this.clusterConfig = clusterConfig;
+        this.clock = clock;
+        this.schedulerState = schedulerState;
 
         interval = TimeSpan.FromSeconds(clusterConfig.PaymentProcessing.Interval > 0 ?
             clusterConfig.PaymentProcessing.Interval : 600);
@@ -60,6 +68,8 @@ public class PayoutManager : BackgroundService
     private readonly TimeSpan interval;
     private readonly ConcurrentDictionary<string, IMiningPool> pools = new();
     private readonly ClusterConfig clusterConfig;
+    private readonly IMasterClock clock;
+    private readonly IPayoutSchedulerState schedulerState;
     private readonly CompositeDisposable disposables = new();
 
 #if !DEBUG
@@ -256,6 +266,7 @@ public class PayoutManager : BackgroundService
             logger.Info(() => "Online");
 
             // Allow all pools to actually come up before the first payment processing run
+            schedulerState.SetNextRun(clock.Now.Add(initialRunDelay));
             await Task.Delay(initialRunDelay, ct);
 
             using var timer = new PeriodicTimer(interval);
@@ -276,6 +287,8 @@ public class PayoutManager : BackgroundService
                 {
                     logger.Error(ex);
                 }
+
+                schedulerState.SetNextRun(clock.Now.Add(interval));
             } while(await timer.WaitForNextTickAsync(ct));
 
             logger.Info(() => "Offline");
@@ -283,6 +296,7 @@ public class PayoutManager : BackgroundService
 
         finally
         {
+            schedulerState.SetNextRun(null);
             disposables.Dispose();
         }
     }

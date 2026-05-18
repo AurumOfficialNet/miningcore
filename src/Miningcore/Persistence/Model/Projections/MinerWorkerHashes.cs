@@ -16,3 +16,9 @@ public record MinerWorkerHashrate
     public string Worker { get; init; }
     public double Hashrate { get; init; }
 }
+
+public record PoolShareSummary
+{
+    public long ShareCount { get; init; }
+    public double ShareDifficulty { get; init; }
+}

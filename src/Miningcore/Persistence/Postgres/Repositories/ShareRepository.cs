@@ -155,6 +155,15 @@ public class ShareRepository : IShareRepository
         await con.ExecuteAsync(new CommandDefinition(query, new { poolId, before }, tx, cancellationToken: ct));
     }
 
+    public async Task<PoolShareSummary> GetPoolShareSummaryAsync(IDbConnection con, string poolId, DateTime start, DateTime end, CancellationToken ct)
+    {
+        const string query = @"SELECT COUNT(*) AS sharecount, COALESCE(SUM(difficulty), 0) AS sharedifficulty
+            FROM shares
+            WHERE poolid = @poolId AND created >= @start AND created <= @end";
+
+        return await con.QuerySingleAsync<PoolShareSummary>(new CommandDefinition(query, new { poolId, start, end }, cancellationToken: ct));
+    }
+
     public Task<double?> GetAccumulatedShareDifficultyBetweenAsync(IDbConnection con, string poolId, DateTime start, DateTime end, CancellationToken ct)
     {
         const string query = "SELECT SUM(difficulty) FROM shares WHERE poolid = @poolId AND created > @start AND created < @end";

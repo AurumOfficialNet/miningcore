@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IO;
 using Miningcore.Blockchain.Ergo;
 using Miningcore.Nicehash;
+using Miningcore.Payments.Abstractions;
 using Miningcore.Pushover;
 
 namespace Miningcore;
@@ -112,6 +113,10 @@ public class AutofacModule : Module
         // Background services
 
         builder.RegisterType<PayoutManager>()
+            .SingleInstance();
+
+        builder.RegisterType<PayoutSchedulerState>()
+            .As<IPayoutSchedulerState>()
             .SingleInstance();
 
         builder.RegisterType<ShareRecorder>()

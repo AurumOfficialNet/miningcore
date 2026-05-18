@@ -7,6 +7,7 @@ using Miningcore.Blockchain;
 using Miningcore.Configuration;
 using Miningcore.Extensions;
 using Miningcore.Mining;
+using Miningcore.Payments.Abstractions;
 using Miningcore.Persistence.Model;
 using Miningcore.Persistence.Model.Projections;
 using Miningcore.Persistence.Repositories;
@@ -31,6 +32,7 @@ public class PoolApiController : ApiControllerBase
         minerRepo = ctx.Resolve<IMinerRepository>();
         shareRepo = ctx.Resolve<IShareRepository>();
         paymentsRepo = ctx.Resolve<IPaymentRepository>();
+        payoutSchedulerState = ctx.Resolve<IPayoutSchedulerState>();
         clock = ctx.Resolve<IMasterClock>();
         pools = ctx.Resolve<ConcurrentDictionary<string, IMiningPool>>();
         adcp = _adcp;
@@ -39,6 +41,7 @@ public class PoolApiController : ApiControllerBase
     private readonly IStatsRepository statsRepo;
     private readonly IBlockRepository blocksRepo;
     private readonly IPaymentRepository paymentsRepo;
+    private readonly IPayoutSchedulerState payoutSchedulerState;
     private readonly IMinerRepository minerRepo;
     private readonly IShareRepository shareRepo;
     private readonly IMasterClock clock;
@@ -66,23 +69,7 @@ public class PoolApiController : ApiControllerBase
                 var result = config.ToPoolInfo(mapper, stats, pool);
 
                 // enrich
-                result.TotalPaid = await cf.Run(con => statsRepo.GetTotalPoolPaymentsAsync(con, config.Id, ct));
-                result.TotalBlocks = await cf.Run(con => blocksRepo.GetPoolBlockCountAsync(con, config.Id, ct));
-                var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, config.Id));
-                result.LastPoolBlockTime = lastBlockTime;
-
-                if(lastBlockTime.HasValue)
-                {
-                    DateTime startTime = lastBlockTime.Value;
-                    var poolEffort = await cf.Run(con => shareRepo.GetEffortBetweenCreatedAsync(con, config.Id, pool.ShareMultiplier, startTime, clock.Now));
-                    result.PoolEffort = poolEffort.Value;
-                }
-
-                var from = clock.Now.AddHours(-topMinersRange);
-
-                var minersByHashrate = await cf.Run(con => statsRepo.PagePoolMinersByHashrateAsync(con, config.Id, from, 0, 15, ct));
-
-                result.TopMiners = minersByHashrate.Select(mapper.Map<MinerPerformanceStats>).ToArray();
+                await EnrichPoolInfoAsync(result, config, pool, topMinersRange, ct);
 
                 return result;
             }).ToArray())
@@ -133,26 +120,39 @@ public class PoolApiController : ApiControllerBase
             Pool = pool.ToPoolInfo(mapper, stats, poolInstance)
         };
 
-        // enrich
-        response.Pool.TotalPaid = await cf.Run(con => statsRepo.GetTotalPoolPaymentsAsync(con, pool.Id, ct));
-        response.Pool.TotalBlocks = await cf.Run(con => blocksRepo.GetPoolBlockCountAsync(con, pool.Id, ct));
-        var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, pool.Id));
-        response.Pool.LastPoolBlockTime = lastBlockTime;
+        await EnrichPoolInfoAsync(response.Pool, pool, poolInstance, topMinersRange, ct);
 
-        if(lastBlockTime.HasValue)
+        return response;
+    }
+
+    private async Task EnrichPoolInfoAsync(PoolInfo poolInfo, PoolConfig poolConfig, IMiningPool poolInstance,
+        uint topMinersRange, CancellationToken ct)
+    {
+        poolInfo.TotalPaid = await cf.Run(con => statsRepo.GetTotalPoolPaymentsAsync(con, poolConfig.Id, ct));
+        poolInfo.TotalBlocks = await cf.Run(con => blocksRepo.GetPoolBlockCountAsync(con, poolConfig.Id, ct));
+
+        var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, poolConfig.Id));
+        poolInfo.LastPoolBlockTime = lastBlockTime;
+
+        if(lastBlockTime.HasValue && poolInstance != null)
         {
-            DateTime startTime = lastBlockTime.Value;
-            var poolEffort = await cf.Run(con => shareRepo.GetEffortBetweenCreatedAsync(con, pool.Id, poolInstance.ShareMultiplier, startTime, clock.Now));
-            response.Pool.PoolEffort = poolEffort.Value;
+            var poolEffort = await cf.Run(con => shareRepo.GetEffortBetweenCreatedAsync(con, poolConfig.Id,
+                poolInstance.ShareMultiplier, lastBlockTime.Value, clock.Now));
+
+            poolInfo.PoolEffort = poolEffort ?? 0;
         }
 
-        var from = clock.Now.AddHours(-topMinersRange);
-
-        response.Pool.TopMiners = (await cf.Run(con => statsRepo.PagePoolMinersByHashrateAsync(con, pool.Id, from, 0, 15, ct)))
+        var topMinersFrom = clock.Now.AddHours(-topMinersRange);
+        poolInfo.TopMiners = (await cf.Run(con => statsRepo.PagePoolMinersByHashrateAsync(con, poolConfig.Id, topMinersFrom, 0, 15, ct)))
             .Select(mapper.Map<MinerPerformanceStats>)
             .ToArray();
 
-        return response;
+        var shareWindowStart = clock.Now.AddHours(-24);
+        var shareSummary = await cf.Run(con => shareRepo.GetPoolShareSummaryAsync(con, poolConfig.Id, shareWindowStart, clock.Now, ct));
+        var lastPoolPayout = await cf.Run(con => paymentsRepo.GetLastPoolPaymentCreatedAsync(con, poolConfig.Id, ct));
+
+        poolInfo.Overview = PoolOverviewMetricsFactory.Create(poolInfo, shareSummary, lastPoolPayout, clock.Now,
+            payoutSchedulerState.NextRun, clusterConfig.PaymentProcessing?.Interval ?? 0);
     }
 
     [HttpGet("{poolId}/performance")]

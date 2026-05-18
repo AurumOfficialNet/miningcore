@@ -94,6 +94,13 @@ public class PaymentRepository : IPaymentRepository
             .ToArray();
     }
 
+    public Task<DateTime?> GetLastPoolPaymentCreatedAsync(IDbConnection con, string poolId, CancellationToken ct)
+    {
+        const string query = "SELECT MAX(created) FROM payments WHERE poolid = @poolId";
+
+        return con.ExecuteScalarAsync<DateTime?>(new CommandDefinition(query, new { poolId }, cancellationToken: ct));
+    }
+
     public Task<uint> GetPaymentsCountAsync(IDbConnection con, string poolId, string address, CancellationToken ct)
     {
         var query = new StringBuilder("SELECT COUNT(*) FROM payments WHERE poolid = @poolId");
