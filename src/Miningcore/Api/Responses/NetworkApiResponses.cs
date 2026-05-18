@@ -11,6 +11,9 @@ public class NetworkOverviewResponse
     public double NetworkHashrate { get; set; }
     public double NetworkDifficulty { get; set; }
     public ulong BlockHeight { get; set; }
+    public int ConnectedPeers { get; set; }
+    public int MempoolTransactions { get; set; }
+    public long MempoolBytes { get; set; }
     public double BlockTimeSeconds { get; set; }
     public decimal TotalSupply { get; set; }
     public NetworkSeriesPoint[] HashrateSeries { get; set; }

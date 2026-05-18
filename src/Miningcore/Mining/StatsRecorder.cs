@@ -116,8 +116,9 @@ public class StatsRecorder : BackgroundService
 
             if (result.Length > 0)
             {
-                // pool miners
-                pool.PoolStats.ConnectedMiners = byMiner.Length; // update connected miners
+                // Preserve Miningcore semantics: miners are payout identities, workers are rigs.
+                pool.PoolStats.ConnectedMiners = byMiner.Length;
+                pool.PoolStats.ConnectedWorkers = result.Length;
 
                 // Stats calc windows
                 var timeFrameBeforeFirstShare = ((result.Min(x => x.FirstShare) - timeFrom).TotalSeconds);
@@ -144,6 +145,7 @@ public class StatsRecorder : BackgroundService
             {
                 // reset
                 pool.PoolStats.ConnectedMiners = 0;
+                pool.PoolStats.ConnectedWorkers = 0;
                 pool.PoolStats.PoolHashrate = 0;
                 pool.PoolStats.SharesPerSecond = 0;
 

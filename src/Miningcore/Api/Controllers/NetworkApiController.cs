@@ -47,7 +47,13 @@ public class NetworkApiController : ApiControllerBase
 
         var stats = await cf.Run(con => statsRepo.GetLastPoolStatsAsync(con, pool.Id, ct));
         var blockchainInfo = await ExecuteObjectAsync(rpc, BitcoinCommands.GetBlockchainInfo, null, ct);
+        var networkInfo = await ExecuteObjectAsync(rpc, BitcoinCommands.GetNetworkInfo, null, ct);
+        var mempoolInfo = await TryExecuteObjectAsync(rpc, "getmempoolinfo", null, ct);
         var daemonHeight = blockchainInfo.Value<ulong?>("blocks") ?? 0;
+        var rpcConnectedPeers = networkInfo.Value<int?>("connections") ??
+            ((networkInfo.Value<int?>("connections_in") ?? 0) + (networkInfo.Value<int?>("connections_out") ?? 0));
+        var mempoolTransactions = mempoolInfo?.Value<int?>("size") ?? 0;
+        var mempoolBytes = mempoolInfo?.Value<long?>("bytes") ?? 0;
 
         var totalSupply = await ExecuteDecimalAsync(rpc, "gettxoutsetinfo", null, ct, "total_amount");
 
@@ -67,6 +73,9 @@ public class NetworkApiController : ApiControllerBase
             NetworkHashrate = networkHashrate,
             NetworkDifficulty = networkDifficulty,
             BlockHeight = blockHeight,
+            ConnectedPeers = stats is { ConnectedPeers: > 0 } ? stats.ConnectedPeers : rpcConnectedPeers,
+            MempoolTransactions = mempoolTransactions,
+            MempoolBytes = mempoolBytes,
             BlockTimeSeconds = blockTimeSeconds,
             TotalSupply = totalSupply,
             HashrateSeries = samples.Select(x => new NetworkSeriesPoint
@@ -171,6 +180,19 @@ public class NetworkApiController : ApiControllerBase
             throw new ApiException($"Daemon RPC {method} failed: {result.Error.Message}", HttpStatusCode.BadGateway);
 
         return result.Response ?? throw new ApiException($"Daemon RPC {method} returned no data", HttpStatusCode.BadGateway);
+    }
+
+    private async Task<JObject> TryExecuteObjectAsync(RpcClient rpc, string method, object payload, CancellationToken ct)
+    {
+        var result = await rpc.ExecuteAsync<JObject>(logger, method, ct, payload);
+
+        if(result.Error != null)
+        {
+            logger.Debug(() => $"Daemon RPC {method} not available or failed for network overview: {result.Error.Message}");
+            return null;
+        }
+
+        return result.Response;
     }
 
     private async Task<double> ExecuteDoubleAsync(RpcClient rpc, string method, object payload, CancellationToken ct)

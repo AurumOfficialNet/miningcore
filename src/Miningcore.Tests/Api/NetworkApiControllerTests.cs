@@ -47,6 +47,9 @@ public class NetworkApiControllerTests
         Assert.Equal(42UL, overview.BlockHeight);
         Assert.Equal(123.45, overview.NetworkHashrate, 3);
         Assert.Equal(678.9, overview.NetworkDifficulty, 1);
+        Assert.Equal(11, overview.ConnectedPeers);
+        Assert.Equal(321, overview.MempoolTransactions);
+        Assert.Equal(123456L, overview.MempoolBytes);
         Assert.Equal(1000m, overview.TotalSupply);
         Assert.NotEmpty(overview.HashrateSeries);
         Assert.NotEmpty(overview.DifficultySeries);
@@ -246,6 +249,8 @@ public class NetworkApiControllerTests
             return method switch
             {
                 "getblockchaininfo" => new { jsonrpc = "2.0", id, result = new { blocks = 5UL, difficulty = 1234.5 } },
+                "getnetworkinfo" => new { jsonrpc = "2.0", id, result = new { connections = 11 } },
+                "getmempoolinfo" => new { jsonrpc = "2.0", id, result = new { size = 321, bytes = 123456L } },
                 "gettxoutsetinfo" => new { jsonrpc = "2.0", id, result = new { total_amount = 1000.0m } },
                 "getnetworkhashps" => new { jsonrpc = "2.0", id, result = 4321.0 },
                 "getblockhash" => new { jsonrpc = "2.0", id, result = $"block-{parameters![0].Value<int>()}" },
