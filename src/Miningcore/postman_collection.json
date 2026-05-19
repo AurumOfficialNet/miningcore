@@ -33,7 +33,7 @@
                             "host": ["{{baseUrl}}"],
                             "path": ["api", "health-check"]
                         },
-                        "description": "Simple health check endpoint that returns 👍"
+                        "description": "Structured readiness endpoint with dependency checks"
                     },
                     "response": []
                 }

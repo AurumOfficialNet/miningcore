@@ -166,6 +166,7 @@ public class Program : BackgroundService
                         services.AddSingleton<PoolApiController, PoolApiController>();
                         services.AddSingleton<AdminApiController, AdminApiController>();
                         services.AddSingleton<NetworkApiController, NetworkApiController>();
+                        services.AddSingleton<HealthCheckController, HealthCheckController>();
 
                         // MVC
                         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

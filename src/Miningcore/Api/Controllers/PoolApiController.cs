@@ -98,12 +98,6 @@ public class PoolApiController : ApiControllerBase
         return Content(result);
     }
 
-    [HttpGet("/api/health-check")]
-    public ActionResult GetHealthCheck()
-    {
-        return Content("👍");
-    }
-
     [HttpGet("{poolId}")]
     public async Task<GetPoolResponse> GetPoolInfoAsync(string poolId, CancellationToken ct, [FromQuery] uint topMinersRange = 24)
     {

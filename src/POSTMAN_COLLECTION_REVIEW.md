@@ -13,7 +13,7 @@ All endpoints that should have a `poolId` parameter already have it, and endpoin
 **Correctly designed as global/cluster-wide**
 
 - `GET /api/help` - Returns all available API endpoints
-- `GET /api/health-check` - Simple health check
+- `GET /api/health-check` - Structured readiness/dependency check
 
 **Reasoning**: These are informational/utility endpoints that apply to the entire cluster, not specific pools.
 
