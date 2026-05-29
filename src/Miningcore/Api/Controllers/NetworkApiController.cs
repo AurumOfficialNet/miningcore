@@ -25,14 +25,12 @@ public class NetworkApiController : ApiControllerBase
     public NetworkApiController(IComponentContext ctx) : base(ctx)
     {
         statsRepo = ctx.Resolve<IStatsRepository>();
-        balanceRepo = ctx.Resolve<IBalanceRepository>();
         messageBus = ctx.Resolve<IMessageBus>();
         clock = ctx.Resolve<IMasterClock>();
         serializerSettings = ctx.Resolve<Newtonsoft.Json.JsonSerializerSettings>();
     }
 
     private readonly IStatsRepository statsRepo;
-    private readonly IBalanceRepository balanceRepo;
     private readonly IMessageBus messageBus;
     private readonly IMasterClock clock;
     private readonly Newtonsoft.Json.JsonSerializerSettings serializerSettings;
@@ -92,17 +90,35 @@ public class NetworkApiController : ApiControllerBase
     }
 
     [HttpGet("blocks")]
-    public async Task<ActionResult<NetworkBlockSummaryResponse[]>> GetBlocksAsync(string poolId, CancellationToken ct)
+    public async Task<ActionResult<NetworkBlockSummaryResponse[]>> GetBlocksAsync(
+        string poolId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 100,
+        CancellationToken ct = default)
     {
+        if(page < 1)
+            throw new ApiException("Invalid page. page must be greater than or equal to 1", HttpStatusCode.BadRequest);
+
+        if(pageSize < 1)
+            throw new ApiException("Invalid pageSize. pageSize must be greater than or equal to 1", HttpStatusCode.BadRequest);
+
         var pool = GetPool(poolId);
         var rpc = CreateRpcClient(pool);
 
         var latestHeight = await GetLatestBlockHeightAsync(rpc, ct);
-        var startHeight = latestHeight >= 99 ? latestHeight - 99 : 0;
+        var offset = (ulong) ((long) (page - 1) * pageSize);
+
+        if(offset > latestHeight)
+            return Array.Empty<NetworkBlockSummaryResponse>();
+
+        var startHeight = latestHeight - offset;
+        var endHeight = startHeight >= (ulong) (pageSize - 1)
+            ? startHeight - (ulong) (pageSize - 1)
+            : 0;
 
         var blocks = new List<NetworkBlockSummaryResponse>();
 
-        for(long height = (long) latestHeight; height >= (long) startHeight; height--)
+        for(long height = (long) startHeight; height >= (long) endHeight; height--)
         {
             var block = await GetBlockByHeightAsync(rpc, height, ct);
 
@@ -150,19 +166,35 @@ public class NetworkApiController : ApiControllerBase
     public async Task<ActionResult<NetworkTopHolderResponse[]>> GetTop100Async(string poolId, CancellationToken ct)
     {
         var pool = GetPool(poolId);
+
+        var richListPath = clusterConfig.Coins?.FirstOrDefault(c => c.Type == pool.Coin)?.RichListPath;
+
+        if(string.IsNullOrEmpty(richListPath))
+            return Array.Empty<NetworkTopHolderResponse>();
+
+        if(!System.IO.File.Exists(richListPath))
+            return Array.Empty<NetworkTopHolderResponse>();
+
+        var json = await System.IO.File.ReadAllTextAsync(richListPath, ct);
+        var root = Newtonsoft.Json.JsonConvert.DeserializeObject<JObject>(json);
+        var entries = root?["richlist"] as JArray;
+
+        if(entries == null || entries.Count == 0)
+            return Array.Empty<NetworkTopHolderResponse>();
+
         var totalSupply = await GetTotalSupplyAsync(pool, ct);
 
-        var balances = await cf.Run(con => balanceRepo.GetPoolBalancesOverThresholdAsync(con, pool.Id, 0m));
-
-        return balances
-            .OrderByDescending(x => x.Amount)
+        return entries
+            .Select(e => new { Address = e.Value<string>("address"), Amount = e.Value<decimal>("amount") })
+            .Where(e => !string.IsNullOrEmpty(e.Address))
+            .OrderByDescending(e => e.Amount)
             .Take(100)
-            .Select((x, index) => new NetworkTopHolderResponse
+            .Select((e, index) => new NetworkTopHolderResponse
             {
                 Rank = index + 1,
-                Address = x.Address,
-                Balance = x.Amount,
-                PercentOfSupply = totalSupply > 0 ? x.Amount / totalSupply * 100m : 0m
+                Address = e.Address,
+                Balance = e.Amount,
+                PercentOfSupply = totalSupply > 0 ? e.Amount / (decimal)totalSupply * 100m : 0m
             })
             .ToArray();
     }

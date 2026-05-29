@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -39,7 +40,20 @@ public class NetworkApiControllerTests
     public async Task Routes_ReturnExpectedJson()
     {
         await using var daemon = await FakeDaemonServer.StartAsync();
-        using var host = await BuildBackendHostAsync(daemon.Port);
+        var richListPath = Path.GetTempFileName();
+        try
+        {
+        await File.WriteAllTextAsync(richListPath, JsonConvert.SerializeObject(new
+        {
+            height = 1,
+            bestblock = "abc",
+            richlist = new[]
+            {
+                new { rank = 1, address = "addr1", amount = 60m },
+                new { rank = 2, address = "addr2", amount = 40m }
+            }
+        }), TestContext.Current.CancellationToken);
+        using var host = await BuildBackendHostAsync(daemon.Port, richListPath);
 
         var client = host.GetTestClient();
 
@@ -72,6 +86,60 @@ public class NetworkApiControllerTests
         Assert.Equal(1, top100[0].Rank);
         Assert.Equal("addr1", top100[0].Address);
         Assert.True(top100[0].PercentOfSupply > top100[1].PercentOfSupply);
+        } // try
+        finally { File.Delete(richListPath); }
+    }
+
+    [Fact]
+    public async Task Blocks_DefaultRequest_MatchesExplicitFirstPageDefaults()
+    {
+        await using var daemon = await FakeDaemonServer.StartAsync();
+        using var host = await BuildBackendHostAsync(daemon.Port);
+
+        var client = host.GetTestClient();
+
+        var implicitDefaults = await ReadJsonAsync<NetworkBlockSummaryResponse[]>(client, "/api/network/acg/blocks");
+        var explicitDefaults = await ReadJsonAsync<NetworkBlockSummaryResponse[]>(client, "/api/network/acg/blocks?page=1&pageSize=100");
+
+        Assert.Equal(implicitDefaults.Select(x => x.Hash), explicitDefaults.Select(x => x.Hash));
+        Assert.Equal(implicitDefaults.Select(x => x.Height), explicitDefaults.Select(x => x.Height));
+    }
+
+    [Fact]
+    public async Task Blocks_ReturnsExpectedPageSlices()
+    {
+        await using var daemon = await FakeDaemonServer.StartAsync();
+        using var host = await BuildBackendHostAsync(daemon.Port);
+
+        var client = host.GetTestClient();
+
+        var page1 = await ReadJsonAsync<NetworkBlockSummaryResponse[]>(client, "/api/network/acg/blocks?page=1&pageSize=2");
+        Assert.Equal(new ulong[] { 5, 4 }, page1.Select(x => x.Height).ToArray());
+
+        var page2 = await ReadJsonAsync<NetworkBlockSummaryResponse[]>(client, "/api/network/acg/blocks?page=2&pageSize=2");
+        Assert.Equal(new ulong[] { 3, 2 }, page2.Select(x => x.Height).ToArray());
+
+        var page3 = await ReadJsonAsync<NetworkBlockSummaryResponse[]>(client, "/api/network/acg/blocks?page=3&pageSize=2");
+        Assert.Equal(new ulong[] { 1, 0 }, page3.Select(x => x.Height).ToArray());
+
+        var page4 = await ReadJsonAsync<NetworkBlockSummaryResponse[]>(client, "/api/network/acg/blocks?page=4&pageSize=2");
+        Assert.Empty(page4);
+    }
+
+    [Fact]
+    public async Task Blocks_InvalidPagingParams_ReturnsBadRequest()
+    {
+        await using var daemon = await FakeDaemonServer.StartAsync();
+        using var host = await BuildBackendHostAsync(daemon.Port);
+
+        var client = host.GetTestClient();
+        var ct = TestContext.Current.CancellationToken;
+
+        var invalidPageResponse = await client.GetAsync("/api/network/acg/blocks?page=0&pageSize=100", ct);
+        Assert.Equal(HttpStatusCode.BadRequest, invalidPageResponse.StatusCode);
+
+        var invalidPageSizeResponse = await client.GetAsync("/api/network/acg/blocks?page=1&pageSize=0", ct);
+        Assert.Equal(HttpStatusCode.BadRequest, invalidPageSizeResponse.StatusCode);
     }
 
     private static async Task<T> ReadJsonAsync<T>(HttpClient client, string path)
@@ -85,17 +153,21 @@ public class NetworkApiControllerTests
         return JsonConvert.DeserializeObject<T>(json)!;
     }
 
-    private static async Task<IHost> BuildBackendHostAsync(int daemonPort)
+    private static async Task<IHost> BuildBackendHostAsync(int daemonPort, string richListPath = null)
     {
         Miningcore.Tests.ModuleInitializer.Initialize();
 
         var clusterConfig = new ClusterConfig
         {
+            Coins = richListPath != null
+                ? new[] { new ClusterCoinConfig { Type = "acg", RichListPath = richListPath } }
+                : null,
             Pools = new[]
             {
                 new PoolConfig
                 {
                     Id = "acg",
+                    Coin = "acg",
                     Enabled = true,
                     Daemons = new[]
                     {
@@ -128,14 +200,6 @@ public class NetworkApiControllerTests
                 new Miningcore.Persistence.Model.PoolStats { Created = DateTime.UtcNow, NetworkHashrate = 150, NetworkDifficulty = 250 }
             }));
 
-        var balanceRepo = Substitute.For<IBalanceRepository>();
-        balanceRepo.GetPoolBalancesOverThresholdAsync(Arg.Any<System.Data.IDbConnection>(), "acg", 0m)
-            .Returns(Task.FromResult(new[]
-            {
-                new Miningcore.Persistence.Model.Balance { Address = "addr1", Amount = 60m },
-                new Miningcore.Persistence.Model.Balance { Address = "addr2", Amount = 40m }
-            }));
-
         var connectionFactory = Substitute.For<IConnectionFactory>();
         connectionFactory.OpenConnectionAsync().Returns(Task.FromResult(Substitute.For<System.Data.IDbConnection>()));
 
@@ -149,7 +213,6 @@ public class NetworkApiControllerTests
                 container.RegisterInstance(new MockMessageBus()).AsImplementedInterfaces();
                 container.RegisterInstance(connectionFactory).AsImplementedInterfaces();
                 container.RegisterInstance(statsRepo).AsImplementedInterfaces();
-                container.RegisterInstance(balanceRepo).AsImplementedInterfaces();
                 container.RegisterInstance(new Newtonsoft.Json.JsonSerializerSettings
                 {
                     ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver()

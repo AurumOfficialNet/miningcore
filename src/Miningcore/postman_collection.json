@@ -69,9 +69,21 @@
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/network/:poolId/blocks",
+                            "raw": "{{baseUrl}}/api/network/:poolId/blocks?page=1&pageSize=100",
                             "host": ["{{baseUrl}}"],
                             "path": ["api", "network", ":poolId", "blocks"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Page number (1-based, default: 1)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "100",
+                                    "description": "Number of blocks per page (default: 100)"
+                                }
+                            ],
                             "variable": [
                                 {
                                     "key": "poolId",
@@ -80,7 +92,7 @@
                                 }
                             ]
                         },
-                        "description": "Get last 100 blocks from the network"
+                        "description": "Get paginated network blocks ordered from newest to oldest"
                     },
                     "response": []
                 },
