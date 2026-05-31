@@ -40,6 +40,7 @@ public class ProgramBackgroundServicesTests : TestBase
         AssertHostedServiceRegistered<ShareRecorder>(services);
         AssertHostedServiceRegistered<ShareReceiver>(services);
         AssertHostedServiceRegistered<StatsRecorder>(services);
+        AssertHostedServiceRegistered<BlockchainIndexer>(services);
         AssertHostedServiceRegistered<MetricsPublisher>(services);
         AssertHostedServiceRegistered<PayoutManager>(services);
         AssertHostedServiceNotRegistered<ShareRelay>(services);
@@ -67,6 +68,7 @@ public class ProgramBackgroundServicesTests : TestBase
         AssertHostedServiceNotRegistered<ShareRecorder>(services);
         AssertHostedServiceNotRegistered<ShareReceiver>(services);
         AssertHostedServiceNotRegistered<StatsRecorder>(services);
+        AssertHostedServiceNotRegistered<BlockchainIndexer>(services);
         AssertHostedServiceNotRegistered<MetricsPublisher>(services);
         AssertHostedServiceNotRegistered<PayoutManager>(services);
     }

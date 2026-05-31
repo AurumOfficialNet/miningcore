@@ -113,7 +113,7 @@
     </ItemGroup>
 
     <!-- Reference pre-built library binaries on Windows  -->
-    <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <ItemGroup Condition="'$(IsWindows)' == 'true' and '$(DisableNativeLibsCopy)' != 'true'">
         <NativeLibs Include="$(ProjectDir)..\..\libs\runtimes\win-x64\*.dll" />
         <None Include="@(NativeLibs)" Visible="False">
             <Link>%(RecursiveDir)%(FileName)%(Extension)</Link>

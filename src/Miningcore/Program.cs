@@ -318,6 +318,9 @@ public class Program : BackgroundService
         {
             // Pool stats
             services.AddHostedService<StatsRecorder>();
+
+            // Blockchain transaction indexer
+            services.AddHostedService<BlockchainIndexer>();
         }
     }
 

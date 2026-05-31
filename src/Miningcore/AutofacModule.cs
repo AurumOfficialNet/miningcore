@@ -134,6 +134,9 @@ public class AutofacModule : Module
         builder.RegisterType<StatsRecorder>()
             .SingleInstance();
 
+        builder.RegisterType<BlockchainIndexer>()
+            .SingleInstance();
+
         builder.RegisterType<NotificationService>()
             .SingleInstance();
 

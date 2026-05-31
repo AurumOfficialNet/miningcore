@@ -53,7 +53,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Miningcore\Miningcore.csproj" />
+    <ProjectReference Include="..\Miningcore\Miningcore.csproj">
+      <AdditionalProperties>DisableNativeLibsCopy=true</AdditionalProperties>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>

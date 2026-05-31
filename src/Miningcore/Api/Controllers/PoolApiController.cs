@@ -32,6 +32,7 @@ public class PoolApiController : ApiControllerBase
         minerRepo = ctx.Resolve<IMinerRepository>();
         shareRepo = ctx.Resolve<IShareRepository>();
         paymentsRepo = ctx.Resolve<IPaymentRepository>();
+        miningTxRepo = ctx.Resolve<IMinerTransactionRepository>();
         payoutSchedulerState = ctx.Resolve<IPayoutSchedulerState>();
         clock = ctx.Resolve<IMasterClock>();
         pools = ctx.Resolve<ConcurrentDictionary<string, IMiningPool>>();
@@ -41,6 +42,7 @@ public class PoolApiController : ApiControllerBase
     private readonly IStatsRepository statsRepo;
     private readonly IBlockRepository blocksRepo;
     private readonly IPaymentRepository paymentsRepo;
+    private readonly IMinerTransactionRepository miningTxRepo;
     private readonly IPayoutSchedulerState payoutSchedulerState;
     private readonly IMinerRepository minerRepo;
     private readonly IShareRepository shareRepo;
@@ -509,6 +511,74 @@ public class PoolApiController : ApiControllerBase
         return response;
     }
 
+    [HttpGet("/api/coins/{coin}/miner/{address}/transactions")]
+    public async Task<Responses.MinerTransaction[]> PageMinerTransactionsAsync(
+        string coin, string address, [FromQuery] int page, [FromQuery] int pageSize = 15)
+    {
+        var pool = GetPoolByCoin(coin);
+        var ct = HttpContext.RequestAborted;
+
+        if(string.IsNullOrEmpty(address))
+            throw new ApiException("Invalid or missing miner address", HttpStatusCode.NotFound);
+
+        coin = coin.ToLowerInvariant();
+
+        var transactions = (await cf.Run(con => miningTxRepo.PageTransactionsAsync(
+                con, coin, address, page, pageSize, ct)))
+            .Select(mapper.Map<Responses.MinerTransaction>)
+            .ToArray();
+
+        // enrich
+        var txInfoBaseUrl = pool.Template.ExplorerTxLink;
+        var addressInfoBaseUrl = pool.Template.ExplorerAccountLink;
+
+        foreach(var tx in transactions)
+        {
+            if(!string.IsNullOrEmpty(txInfoBaseUrl))
+                tx.TransactionInfoLink = string.Format(txInfoBaseUrl, tx.TxId);
+
+            if(!string.IsNullOrEmpty(addressInfoBaseUrl))
+                tx.AddressInfoLink = string.Format(addressInfoBaseUrl, tx.Address);
+        }
+
+        return transactions;
+    }
+
+    [HttpGet("/api/v2/coins/{coin}/miner/{address}/transactions")]
+    public async Task<PagedResultResponse<Responses.MinerTransaction[]>> PageMinerTransactionsV2Async(
+        string coin, string address, [FromQuery] int page, [FromQuery] int pageSize = 15)
+    {
+        var pool = GetPoolByCoin(coin);
+        var ct = HttpContext.RequestAborted;
+
+        if(string.IsNullOrEmpty(address))
+            throw new ApiException("Invalid or missing miner address", HttpStatusCode.NotFound);
+
+        coin = coin.ToLowerInvariant();
+
+        uint pageCount = (uint) Math.Floor((await cf.Run(con => miningTxRepo.GetTransactionCountAsync(con, coin, address, ct))) / (double) pageSize);
+
+        var transactions = (await cf.Run(con => miningTxRepo.PageTransactionsAsync(
+                con, coin, address, page, pageSize, ct)))
+            .Select(mapper.Map<Responses.MinerTransaction>)
+            .ToArray();
+
+        // enrich
+        var txInfoBaseUrl = pool.Template.ExplorerTxLink;
+        var addressInfoBaseUrl = pool.Template.ExplorerAccountLink;
+
+        foreach(var tx in transactions)
+        {
+            if(!string.IsNullOrEmpty(txInfoBaseUrl))
+                tx.TransactionInfoLink = string.Format(txInfoBaseUrl, tx.TxId);
+
+            if(!string.IsNullOrEmpty(addressInfoBaseUrl))
+                tx.AddressInfoLink = string.Format(addressInfoBaseUrl, tx.Address);
+        }
+
+        return new PagedResultResponse<Responses.MinerTransaction[]>(transactions, pageCount);
+    }
+
     [HttpGet("{poolId}/miners/{address}/earnings/daily")]
     public async Task<AmountByDate[]> PageMinerEarningsByDayAsync(
         string poolId, string address, [FromQuery] int page, [FromQuery] int pageSize = 15)
@@ -641,6 +711,36 @@ public class PoolApiController : ApiControllerBase
     }
 
     #endregion // Actions
+
+    private static string ResolveCoin(PoolConfig pool)
+    {
+        var coin = pool.Coin;
+
+        if(string.IsNullOrEmpty(coin))
+            coin = pool.Template?.Symbol;
+
+        if(string.IsNullOrEmpty(coin))
+            throw new ApiException("Pool coin is not configured", HttpStatusCode.InternalServerError);
+
+        return coin.ToLowerInvariant();
+    }
+
+    private PoolConfig GetPoolByCoin(string coin)
+    {
+        if(string.IsNullOrEmpty(coin))
+            throw new ApiException("Invalid coin", HttpStatusCode.NotFound);
+
+        coin = coin.ToLowerInvariant();
+
+        var pool = clusterConfig.Pools
+            .Where(x => x.Enabled)
+            .FirstOrDefault(x => ResolveCoin(x) == coin);
+
+        if(pool == null)
+            throw new ApiException($"Unknown coin {coin}", HttpStatusCode.NotFound);
+
+        return pool;
+    }
 
     private async Task<Responses.WorkerPerformanceStatsContainer[]> GetMinerPerformanceInternal(
         SampleRange mode, PoolConfig pool, string address, CancellationToken ct)

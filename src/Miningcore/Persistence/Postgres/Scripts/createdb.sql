@@ -121,3 +121,28 @@ CREATE TABLE minerstats
 CREATE INDEX IDX_MINERSTATS_POOL_CREATED on minerstats(poolid, created);
 CREATE INDEX IDX_MINERSTATS_POOL_MINER_CREATED on minerstats(poolid, miner, created);
 CREATE INDEX IDX_MINERSTATS_POOL_MINER_WORKER_CREATED_HASHRATE on minerstats(poolid,miner,worker,created desc,hashrate);
+
+CREATE TABLE miner_transactions
+(
+	id BIGSERIAL NOT NULL PRIMARY KEY,
+	coin TEXT NOT NULL,
+	txid TEXT NOT NULL,
+	address TEXT NOT NULL,
+	amount decimal(28,12) NOT NULL,
+	category TEXT NOT NULL,
+	blockheight BIGINT NOT NULL,
+	blockhash TEXT NOT NULL,
+	blocktime TIMESTAMPTZ NOT NULL,
+	created TIMESTAMPTZ NOT NULL
+);
+
+CREATE UNIQUE INDEX IDX_MINER_TX_COIN_TXID_ADDRESS ON miner_transactions(coin, txid, address);
+CREATE INDEX IDX_MINER_TX_COIN_ADDRESS_TIME ON miner_transactions(coin, address, blocktime DESC);
+CREATE INDEX IDX_MINER_TX_COIN_HEIGHT ON miner_transactions(coin, blockheight);
+
+CREATE TABLE indexer_state
+(
+	coin TEXT NOT NULL PRIMARY KEY,
+	lastindexedheight BIGINT NOT NULL DEFAULT 0,
+	updated TIMESTAMPTZ NOT NULL
+);

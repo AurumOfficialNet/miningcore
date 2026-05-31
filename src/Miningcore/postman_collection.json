@@ -642,6 +642,82 @@
                     "response": []
                 },
                 {
+                    "name": "Get Miner Transactions",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/coins/:coin/miner/:address/transactions?page=0&pageSize=15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "coins", ":coin", "miner", ":address", "transactions"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "coin",
+                                    "value": "btc",
+                                    "description": "Coin symbol"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get paginated blockchain transaction history for a miner address scoped by coin. Returns all vout records where the address appears for that coin, with category (coinbase or payment), block height, block hash, and explorer links."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Miner Transactions V2",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v2/coins/:coin/miner/:address/transactions?page=0&pageSize=15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "v2", "coins", ":coin", "miner", ":address", "transactions"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0",
+                                    "description": "Page number (0-based)"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "15",
+                                    "description": "Number of results per page (default: 15)"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "coin",
+                                    "value": "btc",
+                                    "description": "Coin symbol"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                    "description": "Miner wallet address"
+                                }
+                            ]
+                        },
+                        "description": "Get blockchain transaction history for a miner address (V2 - includes page count) scoped by coin. Indexed from the chain; supports Bitcoin and Equihash coin families."
+                    },
+                    "response": []
+                },
+                {
                     "name": "Get Miner Daily Earnings",
                     "request": {
                         "method": "GET",
